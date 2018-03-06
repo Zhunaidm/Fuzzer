@@ -9,16 +9,8 @@ public class DB_test
             System.exit(0);
         }
 
-        String filename = args[0];
-        String word = "";
-        try {
-            Scanner sc = new Scanner(new File(filename));
-            word = sc.next();
-            sc.close();
-        } catch (Exception e) {
-            System.out.println("Invalid File.");
-            System.exit(0);
-        }
+        String word = args[0];
+        
         if (word.length() != 8) {
             System.out.println("File should only contain a single 8 letter word.");
             System.exit(0);
