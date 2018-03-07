@@ -41,7 +41,6 @@ class ClassAdapter extends ClassVisitor implements Opcodes {
 }
 
 class MethodAdapter extends LocalVariablesSorter implements Opcodes {
-    private int branchCounter, data;
     private String className;
 
     public MethodAdapter(int access, String desc,final MethodVisitor mv, String className) {
@@ -53,58 +52,44 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
     @Override
     public void visitCode() {
         super.visitCode();
+
         
-        /* Create two new local variables.
-         * branchCounter - Count number of branches covered.
-         * File - Pointer to the log file.
-         */
-        branchCounter = newLocal(Type.INT_TYPE);
-        data = newLocal(Type.INT_TYPE);
+       mv.visitMethodInsn(INVOKESTATIC, "Data", "resetBranches", "()V", false);
 
-        mv.visitInsn(ICONST_0);
-        mv.visitVarInsn(ISTORE, branchCounter);
-
-        /* TO BE CHANGED
-         * Writing to file.
-         */
-
-        mv.visitTypeInsn(NEW, "Data");
-        mv.visitInsn(DUP);
-        mv.visitMethodInsn(INVOKESPECIAL, "Data", "<init>", "()V", false);
-        mv.visitVarInsn(ASTORE, data);
 
         // Do call
-         
+
         mv.visitCode();
 
     }
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
-        
-        
+
+
         // For every branch covered increment the branchCounter variable
-        mv.visitIincInsn(branchCounter, 1);   
+        mv.visitMethodInsn(INVOKESTATIC, "Data", "incBranches", "()V", false);
+
 
         // DO call
         mv.visitJumpInsn(opcode, label);        
     }
 
-    @Override
-    public void visitInsn(int opcode) {
+    /*  @Override
+        public void visitInsn(int opcode) {
         switch(opcode) {
-            case Opcodes.IRETURN:
-            case Opcodes.FRETURN:
-            case Opcodes.ARETURN:
-            case Opcodes.LRETURN:
-            case Opcodes.DRETURN:
-            case Opcodes.RETURN:
-                mv.visitVarInsn(ALOAD, data);
-                mv.visitMethodInsn(INVOKEVIRTUAL, "Data", "incBranches", "()V", false);
-                break;
-            default:
+        case Opcodes.IRETURN:
+        case Opcodes.FRETURN:
+        case Opcodes.ARETURN:
+        case Opcodes.LRETURN:
+        case Opcodes.DRETURN:
+        case Opcodes.RETURN:
+    //  mv.visitVarInsn(ALOAD, data);
+    // mv.visitMethodInsn(INVOKEVIRTUAL, "Data", "incBranches", "()V", false);
+    break;
+    default:
         } 
         mv.visitInsn(opcode);
-    }
+        } */
 }
 
