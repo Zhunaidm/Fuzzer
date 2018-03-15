@@ -1,3 +1,5 @@
+import java.math.BigInteger;
+
 import java.util.Random;
 
 import java.security.Permission;
@@ -17,13 +19,19 @@ public class JAFL {
         int change, branches = 0;
         String base;
         boolean abort = false;
-        for (int i = 0; i < 8 ; i++) {
+        for (int i = 0; i < sizeOfString ; i++) {
             builder.append(characters.charAt(random.nextInt(characters.length()))); 
         }
         testArr[0] = builder.toString();
         base = builder.toString();
-        while (!abort) {
-            System.out.println(builder.toString());
+        BigInteger big;
+        while (!abort) {            
+            System.out.println(base);
+            big = new BigInteger(base.getBytes());
+            for (int i = 0; i < random.nextInt(4); i++) {
+                int randInt = random.nextInt(big.bitLength());
+                big = big.flipBit(randInt);
+            }
             try {
                 DB_test.main(testArr);
             } catch (SystemExitControl.ExitTrappedException e) {
@@ -31,13 +39,11 @@ public class JAFL {
                 abort = true;
             }
             if (Data.getBranches() > branches) {
-                base = builder.toString();
+                base =  new String(big.toByteArray());
                 branches = Data.getBranches();
             }
-            change = random.nextInt(sizeOfString);
-            builder = new StringBuilder(base);
-            builder.setCharAt(change, characters.charAt(random.nextInt(characters.length())));            
-            testArr[0] = builder.toString();
+                        
+            testArr[0] = new String(big.toByteArray());
             
         }
 
