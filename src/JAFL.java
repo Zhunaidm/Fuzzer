@@ -1,6 +1,8 @@
 import java.math.BigInteger;
 
 import java.util.Random;
+import java.util.Queue;
+import java.util.LinkedList;
 
 import java.security.Permission;
 
@@ -13,6 +15,7 @@ public class JAFL {
 
     public static void main(String[] args) {
         random = new Random();
+        Queue<String> queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
         String testArr[] = new String[1];        
         StringBuilder builder = new StringBuilder();
@@ -24,31 +27,109 @@ public class JAFL {
         }
         testArr[0] = builder.toString();
         base = builder.toString();
-        BigInteger big;
-        while (!abort) {            
-            System.out.println(base);
-            big = new BigInteger(base.getBytes());
-            for (int i = 0; i < random.nextInt(4); i++) {
-                int randInt = random.nextInt(big.bitLength());
-                big = big.flipBit(randInt);
-            }
+       // queue.add(base);
+        System.out.println("Base: " + base);
+        BigInteger big = new BigInteger(base.getBytes());
+        System.out.println("Base Size: " + big.bitLength());
+        System.out.println("Deadbeef: " + (new BigInteger("deadbeef".getBytes())).bitLength());
+        while (!abort) {   
+
+            
             try {
                 DB_test.main(testArr);
             } catch (SystemExitControl.ExitTrappedException e) {
                 System.out.println("Preventing abort...");
                 abort = true;
             }
-            if (Data.getBranches() > branches) {
-                base =  new String(big.toByteArray());
-                branches = Data.getBranches();
+            if (Data.getBranches() == branches) {
+                queue.add(testArr[0]);
+                System.out.println(testArr[0]);
             }
-                        
-            testArr[0] = new String(big.toByteArray());
-            
+            if (Data.getBranches() > branches) {
+                branches = Data.getBranches();
+                queue.clear();
+                queue.add(testArr[0]);                
+                System.out.println(testArr[0] +  " Branches: " + branches );
+            }
+            String temp = queue.remove();
+            big = new BigInteger(temp.getBytes());                        
+            if (queue.size() != 10) {
+                queue.add(temp);
+            }
+            int type = random.nextInt(2);
+           
+            if (type == 0) {
+                big = flipBits(big,  random);
+                testArr[0] = new String(big.toByteArray());
+            } else {
+                
+                big = flipBytes(big, random);
+                testArr[0] = new String(big.toByteArray());
+            }
+
+            //System.out.println(testArr[0]);
         }
 
-       
 
+
+
+
+    }
+
+    public static BigInteger flipBits(BigInteger big, Random rand) {
+       int size = rand.nextInt(4) + 1;
+        int randInt = rand.nextInt(big.bitLength());
+        
+        
+        if ((size + randInt) > big.bitLength()) {
+           size = size - ((size + randInt) - big.bitLength());
+        }
+        BigInteger big2 = big;
+        for (int i = 0; i < size; i++) {
+            big = big.flipBit(randInt + i);
+        }
+        if (big.bitLength() != big2.bitLength()) {
+            return big2;
+        }
+        
+        return big;
+
+
+    }
+
+    public static BigInteger flipBytes(BigInteger big, Random rand) {
+        int size = rand.nextInt(3);
+
+        switch(size) {
+            case 0:
+                size = 6;
+                break;
+            case 1:
+                size = 16;
+                break;
+            case 2:
+                size = 32;
+                break;
+            default:
+                break;
+        }
+
+        
+        int randInt = rand.nextInt(big.bitLength());
+        
+        
+        if ((size + randInt) > big.bitLength()) {
+           size = size - ((size + randInt) - big.bitLength());
+        }
+        BigInteger big2 = big;
+        for (int i = 0; i < size; i++) {
+            big = big.flipBit(randInt + i);
+        }
+        if (big.bitLength() != big2.bitLength()) {
+            return big2;
+        }
+        
+        return big;
 
 
     }
