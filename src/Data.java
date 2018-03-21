@@ -4,6 +4,7 @@ import java.util.Map;
 public class Data {
 
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
+    private static String prevBranch = "Source";
 
     public static void addTuple(String src, String dest) {
         if (!tuples.containsKey(new Tuple(src, dest))) {
@@ -14,6 +15,14 @@ public class Data {
     public static boolean containsTuple(String src, String dest) {
         return tuples.containsKey(new Tuple(src, dest));
     }
+
+    public static String getPrevious() {
+        return prevBranch;
+    }
+    
+    public static void setPrevious(String branch) {
+        prevBranch = branch;
+    }       
 
 }
 
