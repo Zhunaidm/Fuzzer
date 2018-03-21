@@ -3,156 +3,164 @@ import java.math.BigInteger;
 import java.util.Random;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.BitSet;
 
 import java.security.Permission;
 
 public class JAFL {
 
-    private static int sizeOfString = 8;
-    private static String generatedString = "";
-    private final static String characters = "abcdefghijklmnopqrtsuvwxyz";
-    private static Random random;
+    private static String base = "hello";
+    private static boolean abort = false;
 
     public static void main(String[] args) {
-        random = new Random();
+
+        Random random = new Random();
         Queue<String> queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
         String testArr[] = new String[1];        
-        StringBuilder builder = new StringBuilder();
         int change, branches = 0;
-        String base;
         boolean abort = false;
-        for (int i = 0; i < sizeOfString ; i++) {
-            builder.append(characters.charAt(random.nextInt(characters.length()))); 
+        testArr[0] = base;
+
+        System.out.println("Performing Bit Flips...\n");
+        flipBits(base.getBytes());
+
+        System.out.println("Performing Byte Flips...\n");
+        flipBytes(base.getBytes());
+
+    }
+
+
+
+
+
+
+
+    public static void execProgram(String progName, String[] arguments) {
+        try {
+            DB_test.main(arguments);
+        } catch (SystemExitControl.ExitTrappedException e) {
+            System.out.println("Preventing abort...");
+            abort = true;
         }
-        testArr[0] = builder.toString();
-        base = builder.toString();
-       // queue.add(base);
-        System.out.println("Base: " + base);
-        BigInteger big = new BigInteger(base.getBytes());
-        System.out.println("Base Size: " + big.bitLength());
-        System.out.println("Deadbeef: " + (new BigInteger("deadbeef".getBytes())).bitLength());
-        while (!abort) {   
-
-            
-            try {
-                DB_test.main(testArr);
-            } catch (SystemExitControl.ExitTrappedException e) {
-                System.out.println("Preventing abort...");
-                abort = true;
-            }
-            if (Data.getBranches() == branches) {
-                queue.add(testArr[0]);
-                System.out.println(testArr[0]);
-            }
-            if (Data.getBranches() > branches) {
-                branches = Data.getBranches();
-                queue.clear();
-                queue.add(testArr[0]);                
-                System.out.println(testArr[0] +  " Branches: " + branches );
-            }
-            String temp = queue.remove();
-            big = new BigInteger(temp.getBytes());                        
-            if (queue.size() != 10) {
-                queue.add(temp);
-            }
-            int type = random.nextInt(2);
-           
-            if (type == 0) {
-                big = flipBits(big,  random);
-                testArr[0] = new String(big.toByteArray());
-            } else {
-                
-                big = flipBytes(big, random);
-                testArr[0] = new String(big.toByteArray());
-            }
-
-            //System.out.println(testArr[0]);
-        }
-
 
 
 
 
     }
 
-    public static BigInteger flipBits(BigInteger big, Random rand) {
-       int size = rand.nextInt(4) + 1;
-        int randInt = rand.nextInt(big.bitLength());
-        
-        
-        if ((size + randInt) > big.bitLength()) {
-           size = size - ((size + randInt) - big.bitLength());
+    public static void flipBits(byte[] base) {
+        System.out.println("Single bit flip...");
+        // 1 Walking bit.
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+            }
+            System.out.println(new String(base));
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+            }
         }
-        BigInteger big2 = big;
-        for (int i = 0; i < size; i++) {
-            big = big.flipBit(randInt + i);
+        // 2 Walking bits.
+        System.out.println("2 bit flips...");
+        for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 1))); 
+            }
+            System.out.println(new String(base));
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 1))); 
+            }
         }
-        if (big.bitLength() != big2.bitLength()) {
-            return big2;
+        // 4 Walking bits. 
+        System.out.println("4 bit flips...");
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 1))); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 2))); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 3))); 
+            }
+            System.out.println(new String(base));
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] ^ (1 << i)); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 1))); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 2))); 
+                base[j] = (byte) (base[j] ^ (1 << (i + 3))); 
+            }
         }
-        
-        return big;
+
+
 
 
     }
 
-    public static BigInteger flipBytes(BigInteger big, Random rand) {
-        int size = rand.nextInt(3);
+    public static void flipBytes(byte[] base) {
+        // Walking byte.
+        System.out.println("Single byte flip...");
+        for (int j = 0; j < base.length; j++) {
+            base[j] = (byte) (base[j] ^ 0xFF);
+            System.out.println(new String(base));
+            base[j] = (byte) (base[j] ^ 0xFF); 
 
-        switch(size) {
-            case 0:
-                size = 6;
-                break;
-            case 1:
-                size = 16;
-                break;
-            case 2:
-                size = 32;
-                break;
-            default:
-                break;
+        }
+        // 2 Walking bytes.
+        System.out.println("2 byte flips...");
+        if (base.length < 2) {
+            return;
+        }
+        for (int j = 0; j < base.length - 1; j++) {
+            base[j] = (byte) (base[j] ^ 0xFF);
+            base[j+1] = (byte) (base[j+1] ^ 0xFF);
+            System.out.println(new String(base));
+            base[j] = (byte) (base[j] ^ 0xFF); 
+            base[j+1] = (byte) (base[j+1] ^ 0xFF);
+
+        }
+       
+        // 4 Walking bytes. 
+        System.out.println("4 byte flips...");
+        if (base.length < 4) {
+            return;
         }
 
-        
-        int randInt = rand.nextInt(big.bitLength());
-        
-        
-        if ((size + randInt) > big.bitLength()) {
-           size = size - ((size + randInt) - big.bitLength());
+        for (int j = 0; j < base.length - 3; j++) {
+            base[j] = (byte) (base[j] ^ 0xFF);
+            base[j+1] = (byte) (base[j+1] ^ 0xFF);
+            base[j+2] = (byte) (base[j+2] ^ 0xFF);
+            base[j+3] = (byte) (base[j+3] ^ 0xFF);
+            System.out.println(new String(base));
+            base[j] = (byte) (base[j] ^ 0xFF); 
+            base[j+1] = (byte) (base[j+1] ^ 0xFF);
+            base[j+2] = (byte) (base[j+2] ^ 0xFF);
+            base[j+3] = (byte) (base[j+3] ^ 0xFF);
+
         }
-        BigInteger big2 = big;
-        for (int i = 0; i < size; i++) {
-            big = big.flipBit(randInt + i);
-        }
-        if (big.bitLength() != big2.bitLength()) {
-            return big2;
-        }
-        
-        return big;
 
 
     }
 }
 
-class SystemExitControl {
-    @SuppressWarnings("serial")
-    public static class ExitTrappedException extends SecurityException {
-    }
+    class SystemExitControl {
+        @SuppressWarnings("serial")
+        public static class ExitTrappedException extends SecurityException {
+        }
 
-    public static void forbidSystemExitCall() {
-        final SecurityManager securityManager = new SecurityManager() {
-            @Override
-            public void checkPermission(Permission permission) {
-                if (permission.getName().contains("exitVM")) {
-                    throw new ExitTrappedException();
+        public static void forbidSystemExitCall() {
+            final SecurityManager securityManager = new SecurityManager() {
+                @Override
+                public void checkPermission(Permission permission) {
+                    if (permission.getName().contains("exitVM")) {
+                        throw new ExitTrappedException();
+                    }
                 }
-            }
-        };
-        System.setSecurityManager(securityManager);
-    }
+            };
+            System.setSecurityManager(securityManager);
+        }
 
-    public static void enableSystemExitCall() {
-        System.setSecurityManager(null);
+        public static void enableSystemExitCall() {
+            System.setSecurityManager(null);
+        }
     }
-}
