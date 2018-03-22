@@ -24,8 +24,9 @@ public class DB_test
                             if (word.charAt(5) == 'e') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'f') {
-                                        System.out.println("Aborting ...");
-                                        System.exit(0);
+                                        //System.out.println("The word: " + word);
+                                        //System.out.println("Aborting ...");
+                                        //System.exit(0);
                                         System.out.println("This code shouldn't be reached.");
                                     }
                                 }

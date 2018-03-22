@@ -5,10 +5,27 @@ public class Data {
 
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static String prevBranch = "Source";
+    private static boolean newTuple = false;
+
+
+    public static void resetAll() {
+        tuples = null;
+        tuples = new HashMap<Tuple, String>();
+        prevBranch = "Source";
+        newTuple = false;
+    }
+
+    public static void resetTuples() {
+        prevBranch = "Source";
+        newTuple = false;
+
+    }
 
     public static void addTuple(String src, String dest) {
-        if (!tuples.containsKey(new Tuple(src, dest))) {
+        if (!tuples.containsKey(new Tuple(src, dest)) && !src.equals(dest)) {
+            System.out.println("src: " + src + " dest: " + dest);
             tuples.put(new Tuple(src, dest), "");
+            newTuple = true;
         }
     }
 
@@ -19,10 +36,15 @@ public class Data {
     public static String getPrevious() {
         return prevBranch;
     }
-    
+
     public static void setPrevious(String branch) {
         prevBranch = branch;
-    }       
+    }
+
+    public static boolean getNew() {
+        return newTuple;
+    }
+
 
 }
 
