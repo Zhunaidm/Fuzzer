@@ -2,6 +2,7 @@ import java.math.BigInteger;
 
 import java.lang.Class;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 import java.util.Random;
 import java.util.Queue;
@@ -13,6 +14,9 @@ import java.security.Permission;
 public class JAFL {
 
     private static int ARITH_MAX = 35;
+    private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
+    private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
+    private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
     private static String base = "helloooo";
     private static boolean abort = false;
     private static Class<?> cls;
@@ -23,7 +27,6 @@ public class JAFL {
         queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
         String testArr[] = new String[1];        
-        boolean abort = false;
         Data.resetAll();
         int count = 0;
         queue.add(base);
@@ -39,11 +42,13 @@ public class JAFL {
             flipBits(testArr[0].getBytes());
 
             //  System.out.println("Performing Byte Flips...\n");
-             flipBytes(testArr[0].getBytes());
+            flipBytes(testArr[0].getBytes());
 
             arithInc(testArr[0].getBytes());
 
             arithDec(testArr[0].getBytes());
+
+            replaceInteresting(testArr[0].getBytes());
         }
 
     }
@@ -60,9 +65,15 @@ public class JAFL {
             Data.resetTuples();
             meth.invoke(null, (Object) arguments);
         } catch (SystemExitControl.ExitTrappedException e) {
-            System.out.println("Found: " + arguments[0]);
             System.out.println("Preventing abort...");
             abort = true;
+        } catch (InvocationTargetException ite) {
+            if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
+
+                System.out.println("Preventing abort...");
+                abort = true;
+            }
+
         } catch (Exception e) {}
 
 
@@ -293,6 +304,10 @@ public class JAFL {
 
 
 
+
+    }
+
+    public static void replaceInteresting(byte[] base) {
 
     }
 }
