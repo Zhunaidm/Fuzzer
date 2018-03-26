@@ -28,7 +28,7 @@ public class JAFL {
         int count = 0;
         queue.add(base);
         execProgram(null, new String(base).split(" "));
-        while(count < 50000) {
+        while(!abort) {
             Data.resetTuples();
             count++;
             testArr[0] = queue.remove();
@@ -39,7 +39,11 @@ public class JAFL {
             flipBits(testArr[0].getBytes());
 
             //  System.out.println("Performing Byte Flips...\n");
-            flipBytes(testArr[0].getBytes());
+             flipBytes(testArr[0].getBytes());
+
+            arithInc(testArr[0].getBytes());
+
+            arithDec(testArr[0].getBytes());
         }
 
     }
@@ -50,16 +54,16 @@ public class JAFL {
 
 
 
-    public static void execProgram(String progName, String[] arguments) throws Exception {
+    public static void execProgram(String progName, String[] arguments) {
         try {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
             meth.invoke(null, (Object) arguments);
         } catch (SystemExitControl.ExitTrappedException e) {
             System.out.println("Found: " + arguments[0]);
-             System.out.println("Preventing abort...");
-             abort = true;
-        }
+            System.out.println("Preventing abort...");
+            abort = true;
+        } catch (Exception e) {}
 
 
 
@@ -72,11 +76,9 @@ public class JAFL {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < base.length; j++) {
                 base[j] = (byte) (base[j] ^ (1 << i)); 
-            System.out.println("j: " + i + " string: " + new String(base));
             }
             execProgram(null, new String(base).split(" "));
-            System.out.println("i: " + i + " string: " + new String(base));
-           if (Data.getNew()) {
+            if (Data.getNew()) {
                 queue.add(new String(base));
                 Data.resetTuples();
             } 
@@ -185,15 +187,112 @@ public class JAFL {
 
     }
 
-    public void arithInc(byte[] base) throws Exception {
+    public static void arithInc(byte[] base) throws Exception {
 
-        // 8-bit arithmetic increment
+        // 1 Byte increment 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] + i); 
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] -  i);
+            }
+        }
+        // 2 Byte increment 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length - 1; j++) {
+                base[j] = (byte) (base[j] + i); 
+                base[j + 1] = (byte) (base[j+1] + i);
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] -  i);
+                base[j + 1] = (byte) (base[j + 1] - i);
+            }
+        }
+        // 4 Byte increment 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length - 3; j++) {
+                base[j] = (byte) (base[j] + i); 
+                base[j + 1] = (byte) (base[j+1] + i);
+                base[j + 2] = (byte) (base[j+2] + i);
+                base[j + 3] = (byte) (base[j+3] + i);
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] -  i);
+                base[j + 1] = (byte) (base[j + 1] - i);
+                base[j + 2] = (byte) (base[j + 2] - i);
+                base[j + 3] = (byte) (base[j + 3] - i);
+            }
+        }
 
 
-        
+
+
     }
 
-    public void arithDec(byte[] base) throws Exception {
+    public static void arithDec(byte[] base) throws Exception {
+        // 1 Byte deccrement 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length; j++) {
+                base[j] = (byte) (base[j] - i); 
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] +  i);
+            }
+        }
+        // 2 Byte decrement 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length - 1; j++) {
+                base[j] = (byte) (base[j] - i); 
+                base[j + 1] = (byte) (base[j+1] - i);
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] +  i);
+                base[j + 1] = (byte) (base[j + 1] + i);
+            }
+        }
+        // 4 Byte decrement 
+        for (int i = 1; i <= ARITH_MAX; i++) {
+            for (int j = 0; j < base.length - 3; j++) {
+                base[j] = (byte) (base[j] - i); 
+                base[j + 1] = (byte) (base[j+1] - i);
+                base[j + 2] = (byte) (base[j+2] - i);
+                base[j + 3] = (byte) (base[j+3] - i);
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                } 
+                base[j] = (byte) (base[j] +  i);
+                base[j + 1] = (byte) (base[j + 1] + i);
+                base[j + 2] = (byte) (base[j + 2] + i);
+                base[j + 3] = (byte) (base[j + 3] + i);
+            }
+        }
+
+
+
 
     }
 }
