@@ -1,5 +1,8 @@
 import java.math.BigInteger;
 
+import java.lang.Class;
+import java.lang.reflect.Method;
+
 import java.util.Random;
 import java.util.Queue;
 import java.util.LinkedList;
@@ -9,12 +12,14 @@ import java.security.Permission;
 
 public class JAFL {
 
+    private static int ARITH_MAX = 35;
     private static String base = "helloooo";
     private static boolean abort = false;
+    private static Class<?> cls;
 
     private static Queue<String> queue;
-    public static void main(String[] args) {
-
+    public static void main(String[] args) throws Exception {
+        cls = Class.forName("DB_test");
         queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
         String testArr[] = new String[1];        
@@ -45,10 +50,11 @@ public class JAFL {
 
 
 
-    public static void execProgram(String progName, String[] arguments) {
+    public static void execProgram(String progName, String[] arguments) throws Exception {
         try {
+            Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
-            DB_test.main(arguments);
+            meth.invoke(null, (Object) arguments);
         } catch (SystemExitControl.ExitTrappedException e) {
             System.out.println("Found: " + arguments[0]);
              System.out.println("Preventing abort...");
@@ -60,7 +66,7 @@ public class JAFL {
 
     }
 
-    public static void flipBits(byte[] base) {
+    public static void flipBits(byte[] base) throws Exception {
         //  System.out.println("Single bit flip...");
         // 1 Walking bit.
         for (int i = 0; i < 8; i++) {
@@ -122,7 +128,7 @@ public class JAFL {
 
     }
 
-    public static void flipBytes(byte[] base) {
+    public static void flipBytes(byte[] base) throws Exception {
         // Walking byte.
         //System.out.println("Single byte flip...");
         for (int j = 0; j < base.length; j++) {
@@ -176,6 +182,18 @@ public class JAFL {
 
         }
 
+
+    }
+
+    public void arithInc(byte[] base) throws Exception {
+
+        // 8-bit arithmetic increment
+
+
+        
+    }
+
+    public void arithDec(byte[] base) throws Exception {
 
     }
 }
