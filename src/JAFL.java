@@ -9,6 +9,8 @@ import java.util.Queue;
 import java.util.LinkedList;
 import java.util.BitSet;
 
+import java.nio.ByteBuffer;
+
 import java.security.Permission;
 
 public class JAFL {
@@ -39,16 +41,18 @@ public class JAFL {
             queue.add(testArr[0]);
 
             //    System.out.println("Performing Bit Flips...\n");
-            flipBits(testArr[0].getBytes());
+            //flipBits(testArr[0].getBytes());
 
             //  System.out.println("Performing Byte Flips...\n");
-            flipBytes(testArr[0].getBytes());
+            //flipBytes(testArr[0].getBytes());
 
-            arithInc(testArr[0].getBytes());
+            //arithInc(testArr[0].getBytes());
 
-            arithDec(testArr[0].getBytes());
+            //arithDec(testArr[0].getBytes());
 
             replaceInteresting(testArr[0].getBytes());
+            
+
         }
 
     }
@@ -309,6 +313,56 @@ public class JAFL {
     }
 
     public static void replaceInteresting(byte[] base) {
+        // Setting 1 byte integers
+            for (int i = 0; i < interesting_8.length; i++) {
+                for (int j = 0; j < base.length; j++) {
+                    byte currentVal = base[j];
+                    base[j] = (byte) interesting_8[i];
+                    System.out.println(new String(base));
+                    execProgram(null, new String(base).split(" "));
+                    if (Data.getNew()) {
+                        queue.add(new String(base));
+                        Data.resetTuples();
+                    }
+
+                    base[j] = currentVal;
+                }
+            }
+
+        // Setting 2 byte integers
+            for (int i = 0; i < interesting_16.length; i++) {
+                for (int j = 0; j < base.length - 1; j++) {
+                    byte currentVal1 = base[j];
+                    byte currentVal2 = base[j+1];
+                    byte[] temp = {(byte)(interesting_16[i] >> 0), (byte)(interesting_16[i] >> 8)};
+                   
+
+
+                    base[j] = temp[0];
+                    base[j+1] = temp[1];
+
+                    System.out.println(new String(base));
+                    execProgram(null, new String(base).split(" "));
+                    if (Data.getNew()) {
+                        queue.add(new String(base));
+                        Data.resetTuples();
+                    }
+
+                    base[j] = temp[1];
+                    base[j+1] = temp[2];
+
+                    System.out.println(new String(base));
+                    execProgram(null, new String(base).split(" "));
+                    if (Data.getNew()) {
+                        queue.add(new String(base));
+                        Data.resetTuples();
+                    }
+
+                    base[j] = currentVal1;
+                    base[j+1] = currentVal2;
+                    
+                }
+            }
 
     }
 }
