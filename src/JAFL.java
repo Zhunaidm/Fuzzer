@@ -52,7 +52,7 @@ public class JAFL {
 
             replaceInteresting(testArr[0].getBytes());
             
-
+            havoc(testArr[0].getBytes());
         }
 
     }
@@ -398,6 +398,10 @@ public class JAFL {
                     
                 }
             }
+
+    }
+
+    public static void havoc(byte[] base) {
 
     }
 }
