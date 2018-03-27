@@ -37,8 +37,15 @@ public class Data {
             buckets.put(tuple, bucket.ONE);
             localBuckets.put(tuple, 1);
             newTuple = true;
-        } else if (!buckets.containsKey(tuple) && !src.equals(dest)) {
+        } else if (!localBuckets.containsKey(tuple) && !src.equals(dest)) {
             localBuckets.put(tuple, 1);
+        } else {
+            incrementBucketCount(tuple);
+            bucket type = getBucketValue(tuple);
+            if (type.ordinal() > buckets.get(tuple).ordinal()) {
+                buckets.put(tuple, type);
+                newTuple = true;
+            }
         }
     }
 

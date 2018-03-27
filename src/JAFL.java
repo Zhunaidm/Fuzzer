@@ -63,6 +63,7 @@ public class JAFL {
         try {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
+            Data.resetLocal();
             meth.invoke(null, (Object) arguments);
         } catch (SystemExitControl.ExitTrappedException e) {
             System.out.println("Preventing abort...");
