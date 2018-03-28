@@ -19,13 +19,13 @@ public class JAFL {
     private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
     private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
     private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
-    private static String base = "helloooo";
+    private static String base = "PiCkl129";
     private static boolean abort = false;
     private static Class<?> cls;
 
     private static Queue<String> queue;
     public static void main(String[] args) throws Exception {
-        cls = Class.forName("DB_test");
+        cls = Class.forName(args[0]);
         queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
         String testArr[] = new String[1];        
@@ -41,17 +41,17 @@ public class JAFL {
             queue.add(testArr[0]);
 
             //    System.out.println("Performing Bit Flips...\n");
-            flipBits(testArr[0].getBytes());
+ //           flipBits(testArr[0].getBytes());
 
             //  System.out.println("Performing Byte Flips...\n");
-            flipBytes(testArr[0].getBytes());
+   //         flipBytes(testArr[0].getBytes());
 
-            arithInc(testArr[0].getBytes());
+ //           arithInc(testArr[0].getBytes());
 
-            arithDec(testArr[0].getBytes());
+//            arithDec(testArr[0].getBytes());
 
-            replaceInteresting(testArr[0].getBytes());
-            
+  //          replaceInteresting(testArr[0].getBytes());
+
             havoc(testArr[0].getBytes());
         }
 
@@ -314,95 +314,186 @@ public class JAFL {
 
     public static void replaceInteresting(byte[] base) {
         // Setting 1 byte integers
-            for (int i = 0; i < interesting_8.length; i++) {
-                for (int j = 0; j < base.length; j++) {
-                    byte currentVal = base[j];
-                    base[j] = (byte) interesting_8[i];
-                    execProgram(null, new String(base).split(" "));
-                    if (Data.getNew()) {
-                        queue.add(new String(base));
-                        Data.resetTuples();
-                    }
-
-                    base[j] = currentVal;
+        for (int i = 0; i < interesting_8.length; i++) {
+            for (int j = 0; j < base.length; j++) {
+                byte currentVal = base[j];
+                base[j] = (byte) interesting_8[i];
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
                 }
+
+                base[j] = currentVal;
             }
+        }
 
         // Setting 2 byte integers
-            for (int i = 0; i < interesting_16.length; i++) {
-                for (int j = 0; j < base.length - 1; j++) {
-                    byte currentVal1 = base[j];
-                    byte currentVal2 = base[j+1];
-                    byte[] temp = ByteBuffer.allocate(4).putInt(interesting_16[i]).array(); 
+        for (int i = 0; i < interesting_16.length; i++) {
+            for (int j = 0; j < base.length - 1; j++) {
+                byte currentVal1 = base[j];
+                byte currentVal2 = base[j+1];
+                byte[] temp = ByteBuffer.allocate(4).putInt(interesting_16[i]).array(); 
 
 
-                    base[j] = temp[0];
-                    base[j+1] = temp[1];
+                base[j] = temp[0];
+                base[j+1] = temp[1];
 
-                    execProgram(null, new String(base).split(" "));
-                    if (Data.getNew()) {
-                        queue.add(new String(base));
-                        Data.resetTuples();
-                    }
-
-                    base[j] = temp[1];
-                    base[j+1] = temp[0];
-
-                    execProgram(null, new String(base).split(" "));
-                    if (Data.getNew()) {
-                        queue.add(new String(base));
-                        Data.resetTuples();
-                    }
-
-                    base[j] = currentVal1;
-                    base[j+1] = currentVal2;
-                    
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
                 }
+
+                base[j] = temp[1];
+                base[j+1] = temp[0];
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                }
+
+                base[j] = currentVal1;
+                base[j+1] = currentVal2;
+
             }
+        }
         // Setting 4 byte integers
-            for (int i = 0; i < interesting_32.length; i++) {
-                for (int j = 0; j < base.length - 3; j++) {
-                    byte currentVal1 = base[j];
-                    byte currentVal2 = base[j+1];
-                    byte currentVal3 = base[j+1];
-                    byte currentVal4 = base[j+1];
-                    byte[] temp = ByteBuffer.allocate(4).putInt(interesting_32[i]).array(); 
+        for (int i = 0; i < interesting_32.length; i++) {
+            for (int j = 0; j < base.length - 3; j++) {
+                byte currentVal1 = base[j];
+                byte currentVal2 = base[j+1];
+                byte currentVal3 = base[j+1];
+                byte currentVal4 = base[j+1];
+                byte[] temp = ByteBuffer.allocate(4).putInt(interesting_32[i]).array(); 
 
 
-                    base[j] = temp[0];
-                    base[j+1] = temp[1];
-                    base[j+2] = temp[2];
-                    base[j+3] = temp[3];
+                base[j] = temp[0];
+                base[j+1] = temp[1];
+                base[j+2] = temp[2];
+                base[j+3] = temp[3];
 
-                    execProgram(null, new String(base).split(" "));
-                    if (Data.getNew()) {
-                        queue.add(new String(base));
-                        Data.resetTuples();
-                    }
-
-                    base[j] = temp[3];
-                    base[j+1] = temp[2];
-                    base[j+2] = temp[1];
-                    base[j+3] = temp[0];
-
-                    execProgram(null, new String(base).split(" "));
-                    if (Data.getNew()) {
-                        queue.add(new String(base));
-                        Data.resetTuples();
-                    }
-
-                    base[j] = currentVal1;
-                    base[j+1] = currentVal2;
-                    base[j+2] = currentVal3;
-                    base[j+3] = currentVal4;
-                    
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
                 }
+
+                base[j] = temp[3];
+                base[j+1] = temp[2];
+                base[j+2] = temp[1];
+                base[j+3] = temp[0];
+
+                execProgram(null, new String(base).split(" "));
+                if (Data.getNew()) {
+                    queue.add(new String(base));
+                    Data.resetTuples();
+                }
+
+                base[j] = currentVal1;
+                base[j+1] = currentVal2;
+                base[j+2] = currentVal3;
+                base[j+3] = currentVal4;
+
             }
+        }
 
     }
 
     public static void havoc(byte[] base) {
+        Random rand = new Random();
+        int byteNum;
+        byte[] temp, backup = new byte[base.length];
+        System.arraycopy(base, 0, backup, 0, base.length);
+        int runs = rand.nextInt(984) + 16;
+        int tweaks = rand.nextInt(32) + 1;
 
+        for (int i = 0; i < runs; i++) {
+            for (int j = 0; j < tweaks; j++) {
+                int option = rand.nextInt(15);
+                switch (option) {
+                    case 0:
+                        // Flip a random bit somewhere.
+                        byteNum = rand.nextInt(base.length);
+                        base[byteNum] = (byte) (base[byteNum] ^ (1 << i));                    
+                        break;
+                    case 1:
+                        // Set random byte to an interesting value.
+                        byteNum = rand.nextInt(base.length);
+                        base[byteNum] = (byte) interesting_8[rand.nextInt(interesting_8.length)];
+                        break;
+                    case 2:
+                        // Set two bytes to interesting value.
+                        byteNum = rand.nextInt(base.length-1);
+                        temp = ByteBuffer.allocate(4).putInt(interesting_16[rand.nextInt(interesting_16.length)]).array();
+                        if (rand.nextInt(2) == 0) {
+                            base[byteNum] = temp[0];
+                            base[byteNum+1] = temp[1];
+                        } else {
+                            base[byteNum] = temp[1];
+                            base[byteNum+1] = temp[0];
+                        }
+                        break;
+                    case 3:
+                        // Set four bytes to interesting value.
+                        byteNum = rand.nextInt(base.length-3);
+                        temp = ByteBuffer.allocate(4).putInt(interesting_16[rand.nextInt(interesting_32.length)]).array();
+                        if (rand.nextInt(2) == 0) {
+                            base[byteNum] = temp[0];
+                            base[byteNum+1] = temp[1];
+                            base[byteNum+2] = temp[2];
+                            base[byteNum+3] = temp[3];
+                        } else {
+                            base[byteNum] = temp[3];
+                            base[byteNum+1] = temp[2];
+                            base[byteNum+2] = temp[1];
+                            base[byteNum+3] = temp[0];
+                        }
+                        break;
+                    case 4:
+                        // Randomly subtract from a byte.
+                        break;
+                    case 5:
+                        // Randomly subtract from two bytes.
+                        break;
+                    case 6:
+                        // Randomly subtract from four bytes.
+                        break;
+                    case 7:
+                        // Randomly add to byte.
+                        break;
+                    case 8:
+                        // Randomly add to two bytes.
+                        break;
+                    case 9:
+                        // Randomly add to four bytes.
+                        break;
+                    case 10:
+                        // Set a random byte to a random value.
+                        break;
+                    case 11:
+                    case 12:
+                        // Delete bytes.
+                        break;
+                    case 13:
+                        // Clone or insert bytes.
+                        break;
+                    case 14:
+                        // Overwrite bytes.
+                        break;
+                    default:
+                        break;
+                }
+            }
+            System.out.println(new String(base));
+            execProgram(null, new String(base).split(" "));
+            if (Data.getNew()) {
+                queue.add(new String(base));
+                Data.resetTuples();
+            }
+            System.arraycopy(backup, 0, base, 0, backup.length);
+        }
     }
 }
 
