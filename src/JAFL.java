@@ -19,7 +19,7 @@ public class JAFL {
     private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
     private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
     private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
-    private static String base = "PiCkl129";
+    private static String base = "12345678";
     private static boolean abort = false;
     private static Class<?> cls;
 
@@ -41,16 +41,16 @@ public class JAFL {
             queue.add(testArr[0]);
 
             //    System.out.println("Performing Bit Flips...\n");
- //           flipBits(testArr[0].getBytes());
+            flipBits(testArr[0].getBytes());
 
             //  System.out.println("Performing Byte Flips...\n");
-   //         flipBytes(testArr[0].getBytes());
+            flipBytes(testArr[0].getBytes());
 
- //           arithInc(testArr[0].getBytes());
+            arithInc(testArr[0].getBytes());
 
-//            arithDec(testArr[0].getBytes());
+            arithDec(testArr[0].getBytes());
 
-  //          replaceInteresting(testArr[0].getBytes());
+            replaceInteresting(testArr[0].getBytes());
 
             havoc(testArr[0].getBytes());
         }
@@ -84,6 +84,34 @@ public class JAFL {
 
 
 
+    }
+    // Remove a byte from the byte array.
+    public static byte[] removeByte(byte[] base, int index) {
+        int count = 0;
+        byte[] newBase = new byte[base.length - 1];
+        for (int i = 0; i < base.length; i++) {
+            if (i == index) {
+                continue;
+            }
+            newBase[count++] = base[i];
+        }
+
+        return newBase;
+    }
+
+    // Add a byte from the byte array.
+    public static byte[] addByte(byte[] base, byte temp, int index) {
+        int count = 0;
+        byte[] newBase = new byte[base.length + 1];
+        for (int i = 0; i < newBase.length; i++) {
+            if (i == index) {
+                newBase[i] = temp;
+                continue;
+            }
+            newBase[i] = base[count++];
+        }
+
+        return newBase;
     }
 
     public static void flipBits(byte[] base) throws Exception {
@@ -403,7 +431,7 @@ public class JAFL {
 
     public static void havoc(byte[] base) {
         Random rand = new Random();
-        int byteNum;
+        int byteNum, tmp;
         byte[] temp, backup = new byte[base.length];
         System.arraycopy(base, 0, backup, 0, base.length);
         int runs = rand.nextInt(984) + 16;
@@ -425,6 +453,9 @@ public class JAFL {
                         break;
                     case 2:
                         // Set two bytes to interesting value.
+                        if (base.length < 2) {
+                            continue;
+                        }
                         byteNum = rand.nextInt(base.length-1);
                         temp = ByteBuffer.allocate(4).putInt(interesting_16[rand.nextInt(interesting_16.length)]).array();
                         if (rand.nextInt(2) == 0) {
@@ -437,6 +468,9 @@ public class JAFL {
                         break;
                     case 3:
                         // Set four bytes to interesting value.
+                        if (base.length < 4) {
+                            continue;
+                        }
                         byteNum = rand.nextInt(base.length-3);
                         temp = ByteBuffer.allocate(4).putInt(interesting_16[rand.nextInt(interesting_32.length)]).array();
                         if (rand.nextInt(2) == 0) {
@@ -453,31 +487,85 @@ public class JAFL {
                         break;
                     case 4:
                         // Randomly subtract from a byte.
+                        byteNum = rand.nextInt(base.length);
+                        base[byteNum] = (byte) (base[byteNum] - (rand.nextInt(ARITH_MAX) + 1));
                         break;
                     case 5:
                         // Randomly subtract from two bytes.
+                        if (base.length < 2) {
+                            continue;
+                        }
+                        byteNum = rand.nextInt(base.length - 1);
+                        tmp = rand.nextInt(ARITH_MAX) + 1;
+                        base[byteNum] = (byte) (base[byteNum] - tmp);
+                        base[byteNum + 1] = (byte) (base[byteNum + 1] - tmp);
                         break;
                     case 6:
                         // Randomly subtract from four bytes.
+                        if (base.length < 4) {
+                            continue;
+                        }
+                        byteNum = rand.nextInt(base.length - 3);
+                        tmp = rand.nextInt(ARITH_MAX) + 1;
+                        base[byteNum] = (byte) (base[byteNum] - tmp);
+                        base[byteNum + 1] = (byte) (base[byteNum + 1] - tmp);
+                        base[byteNum + 2] = (byte) (base[byteNum + 2] - tmp);
+                        base[byteNum + 2] = (byte) (base[byteNum + 3] - tmp);
                         break;
                     case 7:
                         // Randomly add to byte.
+                        byteNum = rand.nextInt(base.length);
+                        base[byteNum] = (byte) (base[byteNum] - (rand.nextInt(ARITH_MAX) + 1));
                         break;
                     case 8:
                         // Randomly add to two bytes.
+                        if (base.length < 2) {
+                            continue;
+                        }
+                        byteNum = rand.nextInt(base.length - 1);
+                        tmp = rand.nextInt(ARITH_MAX) + 1;
+                        base[byteNum] = (byte) (base[byteNum] + tmp);
+                        base[byteNum + 1] = (byte) (base[byteNum + 1] + tmp);
                         break;
                     case 9:
                         // Randomly add to four bytes.
+                        if (base.length < 4) {
+                            continue;
+                        }
+                        byteNum = rand.nextInt(base.length - 3);
+                        tmp = rand.nextInt(ARITH_MAX) + 1;
+                        base[byteNum] = (byte) (base[byteNum] - tmp);
+                        base[byteNum + 1] = (byte) (base[byteNum + 1] + tmp);
+                        base[byteNum + 2] = (byte) (base[byteNum + 2] + tmp);
+                        base[byteNum + 2] = (byte) (base[byteNum + 3] + tmp);
                         break;
                     case 10:
                         // Set a random byte to a random value.
+                        byteNum = rand.nextInt(base.length);
+                        tmp = rand.nextInt(255) + 1;
+                        base[byteNum] = (byte) (base[byteNum] ^ tmp);
                         break;
                     case 11:
                     case 12:
                         // Delete bytes.
+                        if (base.length < 2) {
+                            continue;
+                        }
+                        byteNum = rand.nextInt(base.length);
+                        base = removeByte(base, byteNum);
                         break;
                     case 13:
                         // Clone or insert bytes.
+                        if (rand.nextInt(4) == 0) {
+                            // Insert constant bytes.
+                            byteNum = rand.nextInt(base.length);
+                            base = addByte(base, (byte) (rand.nextInt(255) + 1) , rand.nextInt(base.length + 1));
+                        } else {
+                            // Clone Bytes.
+                            byteNum = rand.nextInt(base.length);
+                            base = addByte(base, base[byteNum], rand.nextInt(base.length + 1)); 
+
+                        }
                         break;
                     case 14:
                         // Overwrite bytes.
@@ -486,12 +574,13 @@ public class JAFL {
                         break;
                 }
             }
-            System.out.println(new String(base));
+            //System.out.println(new String(base));
             execProgram(null, new String(base).split(" "));
             if (Data.getNew()) {
                 queue.add(new String(base));
                 Data.resetTuples();
             }
+            base = new byte[backup.length];
             System.arraycopy(backup, 0, base, 0, backup.length);
         }
     }
