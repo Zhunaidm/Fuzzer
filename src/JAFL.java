@@ -19,7 +19,7 @@ public class JAFL {
     private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
     private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
     private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
-    private static String base = "12345678";
+    private static String base = "1234";
     private static boolean abort = false;
     private static Class<?> cls;
 
@@ -112,6 +112,12 @@ public class JAFL {
         }
 
         return newBase;
+    }
+
+    // Replace a byte from the byte array.
+    public static byte[] replaceByte(byte[] base, byte temp, int index) {
+        base[index] = temp;
+        return base;
     }
 
     public static void flipBits(byte[] base) throws Exception {
@@ -568,7 +574,22 @@ public class JAFL {
                         }
                         break;
                     case 14:
-                        // Overwrite bytes.
+                        // Overwrite bytes                        
+                        // Random chunk or fixed bytes.
+                        if (rand.nextInt(4) == 0) {
+                            // Fixed bytes.
+                            byteNum = rand.nextInt(base.length);                            
+                            base = replaceByte(base, (byte) (rand.nextInt(255) + 1) , byteNum);
+                        } else {
+                            // Random chunk.
+                            byteNum = rand.nextInt(base.length);
+                            tmp = rand.nextInt(base.length);
+                            if (byteNum == tmp) {
+                                continue;
+                            }
+                            base = replaceByte(base, base[tmp], byteNum); 
+
+                        }
                         break;
                     default:
                         break;
