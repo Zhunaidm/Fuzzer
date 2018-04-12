@@ -8,6 +8,7 @@ public class Data {
     private static Map<Tuple, Integer> localBuckets;
     private static String prevBranch = "Source";
     private static boolean newTuple = false;
+    private static int branchNo = 0;
 
 
     public static void resetAll() {
@@ -17,6 +18,7 @@ public class Data {
         buckets = new HashMap<Tuple, bucket>();
         prevBranch = "Source";
         newTuple = false;
+        branchNo = 0;
     }
 
     public static void resetTuples() {
@@ -25,9 +27,22 @@ public class Data {
 
     }
 
+    public static void resetSource() {
+        prevBranch = "Source";
+    }
+
     public static void resetLocal() {
         localBuckets = null;
         localBuckets = new HashMap<Tuple, Integer>();
+    }
+
+    public static int getNextBranchNo() {
+        branchNo++;
+        return branchNo;
+    }
+
+    public static void resetBranchNo() {
+        branchNo = 0;
     }
 
     public static void addTuple(String src, String dest) {

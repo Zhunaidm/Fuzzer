@@ -45,27 +45,31 @@ class ClassAdapter extends ClassVisitor implements Opcodes {
 
 class MethodAdapter extends LocalVariablesSorter implements Opcodes {
     private String className;
-    private static int count = 0;
 
     public MethodAdapter(int access, String desc,final MethodVisitor mv, String className) {
         super(ASM6, access, desc, mv);
         this.className = className;
     }
 
+    @Override
+    public void visitCode() {
+        mv.visitMethodInsn(INVOKESTATIC, "Data", "resetSource", "()V", false);
+        mv.visitCode();
+    }
 
    
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
+        int branchNo = Data.getNextBranchNo();
         // If the tuple of branches is not in the map add it        
         mv.visitMethodInsn(INVOKESTATIC, "Data", "getPrevious", "()Ljava/lang/String;", false);
-        mv.visitLdcInsn(Integer.toString(count));
-        mv.visitMethodInsn(INVOKESTATIC, "Data", "addTuple", "(Ljava/lang/String;Ljava/lang/String;)V",      false);
-
+        mv.visitLdcInsn(className + "_" + branchNo);
+        mv.visitMethodInsn(INVOKESTATIC, "Data", "addTuple", "(Ljava/lang/String;Ljava/lang/String;)V", false);
         // Set the previous branch to this branch
-        mv.visitLdcInsn(Integer.toString(count));
+        mv.visitLdcInsn(className + "_" + branchNo);
         mv.visitMethodInsn(INVOKESTATIC, "Data", "setPrevious", "(Ljava/lang/String;)V", false);
-        count++;
+        
         // Do the call
         mv.visitJumpInsn(opcode, label);
                    
