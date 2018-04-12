@@ -36,6 +36,10 @@ public class Data {
         localBuckets = new HashMap<Tuple, Integer>();
     }
 
+    public static int getSize() {
+        return tuples.size();
+    }
+
     public static int getNextBranchNo() {
         branchNo++;
         return branchNo;
@@ -47,7 +51,8 @@ public class Data {
 
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
-        if (!tuples.containsKey(tuple) && !src.equals(dest)) {        
+        if (!tuples.containsKey(tuple) && !src.equals(dest)) {
+            System.out.println("src: " + src + " dest: " + dest);        
             tuples.put(tuple, "");
             buckets.put(tuple, bucket.ONE);
             localBuckets.put(tuple, 1);

@@ -19,7 +19,7 @@ public class JAFL {
     private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
     private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
     private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
-    private static String base = "1";
+    private static String base = "sup";
     private static boolean abort = false;
     private static Class<?> cls;
 
@@ -32,7 +32,8 @@ public class JAFL {
         Data.resetAll();
         queue.add(base);
         execProgram(null, new String(base).split(" "));
-        while(!abort) {
+        
+        while(!abort) {        
             Data.resetTuples();            
             testArr[0] = queue.remove();
             System.out.println("Base: " + testArr[0]);

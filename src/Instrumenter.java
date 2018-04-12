@@ -49,15 +49,7 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
     public MethodAdapter(int access, String desc,final MethodVisitor mv, String className) {
         super(ASM6, access, desc, mv);
         this.className = className;
-    }
-
-    @Override
-    public void visitCode() {
-        mv.visitMethodInsn(INVOKESTATIC, "Data", "resetSource", "()V", false);
-        mv.visitCode();
-    }
-
-   
+    }  
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
