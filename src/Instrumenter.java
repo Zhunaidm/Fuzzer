@@ -1,5 +1,7 @@
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -25,6 +27,9 @@ public class Instrumenter {
         FileOutputStream fos = new FileOutputStream(args[1]);
         fos.write(cw.toByteArray());
         fos.close();
+        BufferedWriter out = new BufferedWriter(new FileWriter(".branches"));
+        out.write(Data.getCounter() + "\n");
+        out.close();
     }
 }
 
@@ -53,7 +58,8 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
-        int branchNo = Data.getNextBranchNo();
+        int branchNo = Data.getNextBranchNo();                
+        Data.incCounter();
         // If the tuple of branches is not in the map add it        
         mv.visitMethodInsn(INVOKESTATIC, "Data", "getPrevious", "()Ljava/lang/String;", false);
         mv.visitLdcInsn(className + "_" + branchNo);

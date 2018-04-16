@@ -1,5 +1,8 @@
 import java.math.BigInteger;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 import java.lang.Class;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -25,6 +28,7 @@ public class JAFL {
 
     private static Queue<String> queue;
     public static void main(String[] args) throws Exception {
+        int count = 0;
         cls = Class.forName(args[0]);
         queue = new LinkedList<String>();
         SystemExitControl.forbidSystemExitCall();
@@ -33,6 +37,10 @@ public class JAFL {
         queue.add(base);
         execProgram(null, new String(base).split(" "));
         
+        BufferedReader br = new BufferedReader(new FileReader(".branches"));
+        for (String line = br.readLine(); line != null; line = br.readLine()) {
+            count += Integer.parseInt(line);
+         }
         while(!abort) {        
             Data.resetTuples();            
             testArr[0] = queue.remove();
@@ -52,6 +60,8 @@ public class JAFL {
             replaceInteresting(testArr[0].getBytes());
 
             havoc(testArr[0].getBytes());
+                
+            System.out.println("Coverage: " + (Data.getSize() /  count * 100.0));
         }
 
     }

@@ -9,6 +9,7 @@ public class Data {
     private static String prevBranch = "Source";
     private static boolean newTuple = false;
     private static int branchNo = 0;
+    private static int counter = 0;
 
 
     public static void resetAll() {
@@ -34,6 +35,14 @@ public class Data {
     public static void resetLocal() {
         localBuckets = null;
         localBuckets = new HashMap<Tuple, Integer>();
+    }
+
+    public static void incCounter() {
+        counter++;
+    }
+
+    public static int getCounter() {
+        return counter;
     }
 
     public static int getSize() {
@@ -64,6 +73,7 @@ public class Data {
             bucket type = getBucketValue(tuple);
             if (type.ordinal() > buckets.get(tuple).ordinal()) {
                 buckets.put(tuple, type);
+                System.out.println("New Bucket from: " + type + " src: " + src + " dest: " + dest);   
                 newTuple = true;
             }
         }
