@@ -27,8 +27,9 @@ public class Instrumenter {
         FileOutputStream fos = new FileOutputStream(args[1]);
         fos.write(cw.toByteArray());
         fos.close();
-        BufferedWriter out = new BufferedWriter(new FileWriter(".branches"));
-        out.write(Data.getCounter() + "\n");
+        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true));
+        out.write(Data.getCounter() + "\n");       
+        out.flush();
         out.close();
     }
 }

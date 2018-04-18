@@ -22,7 +22,7 @@ public class JAFL {
     private static int[] interesting_8 = {-128, -1, 0, 1, 16, 32, 64, 100, 127};
     private static int[] interesting_16 = {-32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767};
     private static int[] interesting_32 = {-2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045, 2147483647};
-    private static String base = "sup";
+    private static String base = "url:";
     private static boolean abort = false;
     private static Class<?> cls;
 
@@ -61,7 +61,7 @@ public class JAFL {
 
             havoc(testArr[0].getBytes());
                 
-            System.out.println("Coverage: " + (Data.getSize() /  count * 100.0));
+            System.out.println("Coverage: " + ((double)Data.getSize() /  (double)count * 100.0));
         }
 
     }

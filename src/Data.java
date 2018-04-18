@@ -61,7 +61,7 @@ public class Data {
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
-            System.out.println("src: " + src + " dest: " + dest);        
+          //  System.out.println("src: " + src + " dest: " + dest);        
             tuples.put(tuple, "");
             buckets.put(tuple, bucket.ONE);
             localBuckets.put(tuple, 1);
@@ -73,7 +73,7 @@ public class Data {
             bucket type = getBucketValue(tuple);
             if (type.ordinal() > buckets.get(tuple).ordinal()) {
                 buckets.put(tuple, type);
-                System.out.println("New Bucket from: " + type + " src: " + src + " dest: " + dest);   
+              //  System.out.println("New Bucket from: " + type + " src: " + src + " dest: " + dest);   
                 newTuple = true;
             }
         }
