@@ -12,8 +12,6 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
-
-
 public class Instrumenter {
 
     public static void main(final String args[]) throws Exception {
@@ -28,7 +26,7 @@ public class Instrumenter {
         fos.write(cw.toByteArray());
         fos.close();
         BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true));
-        out.write(Data.getCounter() + "\n");       
+        out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
         out.flush();
         out.close();
     }
@@ -36,14 +34,15 @@ public class Instrumenter {
 
 class ClassAdapter extends ClassVisitor implements Opcodes {
     private String className;
+
     public ClassAdapter(final ClassVisitor cv, String className) {
         super(ASM6, cv);
         this.className = className;
     }
 
     @Override
-    public MethodVisitor visitMethod(final int access, final String name,
-            final String desc, final String signature, final String[] exceptions) {
+    public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
+            final String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
         return mv == null ? null : new MethodAdapter(access, desc, mv, className);
     }
@@ -52,14 +51,14 @@ class ClassAdapter extends ClassVisitor implements Opcodes {
 class MethodAdapter extends LocalVariablesSorter implements Opcodes {
     private String className;
 
-    public MethodAdapter(int access, String desc,final MethodVisitor mv, String className) {
+    public MethodAdapter(int access, String desc, final MethodVisitor mv, String className) {
         super(ASM6, access, desc, mv);
         this.className = className;
-    }  
+    }
 
     @Override
     public void visitJumpInsn(int opcode, Label label) {
-        int branchNo = Data.getNextBranchNo();                
+        int branchNo = Data.getNextBranchNo();
         Data.incCounter();
         // If the tuple of branches is not in the map add it        
         mv.visitMethodInsn(INVOKESTATIC, "Data", "getPrevious", "()Ljava/lang/String;", false);
@@ -68,9 +67,9 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
         // Set the previous branch to this branch
         mv.visitLdcInsn(className + "_" + branchNo);
         mv.visitMethodInsn(INVOKESTATIC, "Data", "setPrevious", "(Ljava/lang/String;)V", false);
-        
+
         // Do the call
         mv.visitJumpInsn(opcode, label);
-                   
+
     }
 }
