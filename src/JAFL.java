@@ -2,6 +2,12 @@ import java.math.BigInteger;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.File;
+import java.io.FileOutputStream;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import java.lang.Class;
 import java.lang.reflect.Method;
@@ -11,6 +17,7 @@ import java.util.Random;
 import java.util.Queue;
 import java.util.LinkedList;
 import java.util.BitSet;
+import java.util.Arrays;
 
 import java.nio.ByteBuffer;
 
@@ -22,23 +29,25 @@ public class JAFL {
     private static int[] interesting_8 = { -128, -1, 0, 1, 16, 32, 64, 100, 127 };
     private static int[] interesting_16 = { -32768, -128, 128, 255, 256, 512, 1000, 1024, 4096, 32767 };
     private static int[] interesting_32 = { -2147483648, -100663046, -32769, 32768, 65535, 65536, 100663045,
-            2147483647 };
-    private static String base = "12345";
+            2147483647 };    
     private static boolean abort = false;
     private static Class<?> cls;
     private static int paths = 0;
+    private static String file = "";
 
-    private static Queue<String> queue;
+    private static Queue<byte[]> queue;
 
     public static void main(String[] args) throws Exception {
         int count = 0;
+        file = args[1];
         cls = Class.forName(args[0]);
-        queue = new LinkedList<String>();
-        SystemExitControl.forbidSystemExitCall();
-        String testArr[] = new String[1];
+        queue = new LinkedList<byte[]>();        
+        Path path = Paths.get(file);
+        byte[] base = Files.readAllBytes(path); 
+        SystemExitControl.forbidSystemExitCall();        
         Data.resetAll();
         queue.add(base);
-        execProgram(null, new String(base).split(" "));
+        execProgram(null,base);        
 
         BufferedReader br = new BufferedReader(new FileReader(".branches"));
         for (String line = br.readLine(); line != null; line = br.readLine()) {
@@ -48,23 +57,24 @@ public class JAFL {
         }
         while (!abort) {
             Data.resetTuples();
-            testArr[0] = queue.remove();
-            System.out.println("Base: " + testArr[0]);
-            queue.add(testArr[0]);
+            byte[] basic = queue.remove();            
+            System.out.println("Base: " + new String(basic));
+            queue.add(basic);
+            byte[] temp = Arrays.copyOf(basic, basic.length);
 
             //    System.out.println("Performing Bit Flips...\n");
-            flipBits(testArr[0].getBytes());
+            flipBits(temp);
 
             //  System.out.println("Performing Byte Flips...\n");
-            flipBytes(testArr[0].getBytes());
+            flipBytes(temp);
 
-            arithInc(testArr[0].getBytes());
+            arithInc(temp);
 
-            arithDec(testArr[0].getBytes());
+            arithDec(temp);
 
-            replaceInteresting(testArr[0].getBytes());
+            replaceInteresting(temp);
 
-            havoc(testArr[0].getBytes());
+            havoc(temp);
 
             //System.out.println("Coverage: " + ((double) Data.getSize() / (double) count * 100.0));
             System.out.println("No Paths: " + paths);
@@ -72,12 +82,16 @@ public class JAFL {
 
     }
 
-    public static void execProgram(String progName, String[] arguments) {
+    public static void execProgram(String progName, byte[] base) {
         try {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
-            Data.resetLocal();
-            meth.invoke(null, (Object) arguments);
+            Data.resetLocal();            
+            FileOutputStream fos = new FileOutputStream(".temp");
+            fos.write(base);
+            fos.close();
+            meth.invoke(null, (Object)(new String[] {".temp"}));
+
         } catch (SystemExitControl.ExitTrappedException e) {
             System.out.println("Preventing abort...");
             abort = true;
@@ -135,9 +149,9 @@ public class JAFL {
             for (int j = 0; j < base.length; j++) {
                 base[j] = (byte) (base[j] ^ (1 << i));
             }
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -152,9 +166,9 @@ public class JAFL {
                 base[j] = (byte) (base[j] ^ (1 << i));
                 base[j] = (byte) (base[j] ^ (1 << (i + 1)));
             }
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -172,9 +186,9 @@ public class JAFL {
                 base[j] = (byte) (base[j] ^ (1 << (i + 2)));
                 base[j] = (byte) (base[j] ^ (1 << (i + 3)));
             }
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -193,9 +207,9 @@ public class JAFL {
         //System.out.println("Single byte flip...");
         for (int j = 0; j < base.length; j++) {
             base[j] = (byte) (base[j] ^ 0xFF);
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -210,9 +224,9 @@ public class JAFL {
         for (int j = 0; j < base.length - 1; j++) {
             base[j] = (byte) (base[j] ^ 0xFF);
             base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -232,9 +246,9 @@ public class JAFL {
             base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
             base[j + 2] = (byte) (base[j + 2] ^ 0xFF);
             base[j + 3] = (byte) (base[j + 3] ^ 0xFF);
-            execProgram(null, new String(base).split(" "));
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }
@@ -254,9 +268,9 @@ public class JAFL {
             for (int j = 0; j < base.length; j++) {
                 base[j] = (byte) (base[j] + i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -269,9 +283,9 @@ public class JAFL {
                 base[j] = (byte) (base[j] + i);
                 base[j + 1] = (byte) (base[j + 1] + i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -287,9 +301,9 @@ public class JAFL {
                 base[j + 2] = (byte) (base[j + 2] + i);
                 base[j + 3] = (byte) (base[j + 3] + i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -308,9 +322,9 @@ public class JAFL {
             for (int j = 0; j < base.length; j++) {
                 base[j] = (byte) (base[j] - i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -323,9 +337,9 @@ public class JAFL {
                 base[j] = (byte) (base[j] - i);
                 base[j + 1] = (byte) (base[j + 1] - i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -341,9 +355,9 @@ public class JAFL {
                 base[j + 2] = (byte) (base[j + 2] - i);
                 base[j + 3] = (byte) (base[j + 3] - i);
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -362,9 +376,9 @@ public class JAFL {
             for (int j = 0; j < base.length; j++) {
                 byte currentVal = base[j];
                 base[j] = (byte) interesting_8[i];
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -383,9 +397,9 @@ public class JAFL {
                 base[j] = temp[0];
                 base[j + 1] = temp[1];
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -393,9 +407,9 @@ public class JAFL {
                 base[j] = temp[1];
                 base[j + 1] = temp[0];
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -419,9 +433,9 @@ public class JAFL {
                 base[j + 2] = temp[2];
                 base[j + 3] = temp[3];
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -431,9 +445,9 @@ public class JAFL {
                 base[j + 2] = temp[1];
                 base[j + 3] = temp[0];
 
-                execProgram(null, new String(base).split(" "));
+                execProgram(null,base);
                 if (Data.getNew()) {
-                    queue.add(new String(base));
+                    queue.add(base);
                     Data.resetTuples();
                     paths++;
                 }
@@ -608,10 +622,10 @@ public class JAFL {
                     break;
                 }
             }
-            //System.out.println(new String(base));
-            execProgram(null, new String(base).split(" "));
+            //System.out.println(base);
+            execProgram(null,base);
             if (Data.getNew()) {
-                queue.add(new String(base));
+                queue.add(base);
                 Data.resetTuples();
                 paths++;
             }

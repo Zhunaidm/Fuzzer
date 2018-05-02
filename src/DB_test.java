@@ -3,13 +3,17 @@ import java.util.*;
 
 public class DB_test
 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
        /* if (args.length != 1) {
             System.out.println("Please provide filename as argument.");
             System.exit(0);
         }*/
 
-        String word = args[0];
+        Scanner sc = new Scanner(new File(args[0]));
+        String word = sc.next();
+        sc.close();
+
+        
 
        /* if (word.length() != 8) {
             System.out.println("File should only contain a single 8 letter word.");
