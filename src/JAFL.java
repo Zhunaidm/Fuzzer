@@ -31,8 +31,12 @@ public class JAFL {
     private static Class<?> cls;
     private static int paths = 0;
     private static String file = "";
-
     private static Queue<Input> queue;
+    private static double preTime;
+
+    private static boolean printCoverage = false;
+    private static boolean printPaths = false;
+    private static boolean printTime = true;
 
     public static void main(String[] args) throws Exception {
         int count = 0;
@@ -52,7 +56,9 @@ public class JAFL {
             line = line.trim();
             count += Integer.parseInt(line);
         }
+        preTime = System.currentTimeMillis();
         while (!abort) {
+
             Data.resetTuples();
             Input input = queue.remove();
             byte[] basic = input.getData();
@@ -74,10 +80,15 @@ public class JAFL {
             }
 
             havoc(temp);
-
-            // System.out.println("Coverage: " + ((double) Data.getSize() / (double) count *
-            // 100.0));
-            System.out.println("No Paths: " + paths);
+            if (printCoverage) {
+                System.out.println("Coverage: " + ((double) Data.getSize() / (double) count * 100.0));
+            }
+            if (printPaths) {
+                System.out.println("No Paths: " + paths);
+            }
+            if (printTime) {
+                System.out.println("Running Time: " + (System.currentTimeMillis() - preTime) / 1000 + " seconds");
+            }
         }
 
     }

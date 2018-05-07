@@ -10,8 +10,11 @@ done
 arraylength=${#program[@]}
 
 export ASM_HOME="/home/zhunaid/ASM/asm-6.0/lib"
+rm -rf .branches
+rm -rf .temp
 javac JAFL.java
 javac Data.java
+javac $1
 javac -cp .:$ASM_HOME/asm-6.0.jar:$ASM_HOME/asm-commons-6.0.jar Instrumenter.java
 
 for (( i=0; i<${arraylength}; i++ ));
