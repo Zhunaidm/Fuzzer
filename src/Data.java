@@ -11,7 +11,6 @@ public class Data {
     private static int branchNo = 0;
     private static int counter = 0;
 
-
     public static void resetAll() {
         tuples = null;
         tuples = new HashMap<Tuple, String>();
@@ -61,7 +60,7 @@ public class Data {
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
-          //  System.out.println("src: " + src + " dest: " + dest);        
+            // System.out.println("src: " + src + " dest: " + dest);
             tuples.put(tuple, "");
             buckets.put(tuple, bucket.ONE);
             localBuckets.put(tuple, 1);
@@ -73,7 +72,8 @@ public class Data {
             bucket type = getBucketValue(tuple);
             if (type.ordinal() > buckets.get(tuple).ordinal()) {
                 buckets.put(tuple, type);
-              //  System.out.println("New Bucket from: " + type + " src: " + src + " dest: " + dest);   
+                // System.out.println("New Bucket from: " + type + " src: " + src + " dest: " +
+                // dest);
                 newTuple = true;
             }
         }
@@ -83,10 +83,14 @@ public class Data {
         localBuckets.put(tuple, localBuckets.get(tuple) + 1);
     }
 
+    public static int getLocalBucketSize() {
+        return localBuckets.size();
+    }
+
     public static bucket getBucketValue(Tuple tuple) {
         int count = localBuckets.get(tuple);
         bucket type = null;
-       
+
         if (count == 1) {
             type = bucket.ONE;
         } else if (count == 2) {
@@ -124,7 +128,6 @@ public class Data {
         return newTuple;
     }
 
-
     public enum bucket {
         ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT;
     }
@@ -134,7 +137,8 @@ public class Data {
 class Tuple {
     private String src;
     private String dest;
-    public Tuple (String src, String dest) {
+
+    public Tuple(String src, String dest) {
         this.src = src;
         this.dest = dest;
     }
@@ -146,10 +150,12 @@ class Tuple {
     public String getDest() {
         return this.dest;
     }
+
     @Override
     public int hashCode() {
         return src.hashCode() + dest.hashCode();
     }
+
     @Override
     public boolean equals(Object obj) {
         Tuple tuple = (Tuple) obj;
@@ -161,4 +167,3 @@ class Tuple {
 
     }
 }
-

@@ -13,7 +13,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import java.util.Random;
 import java.util.Queue;
-import java.util.LinkedList;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.Arrays;
 
 import java.nio.ByteBuffer;
@@ -31,24 +32,27 @@ public class JAFL {
     private static Class<?> cls;
     private static int paths = 0;
     private static String file = "";
-    private static Queue<Input> queue;
+    private static PriorityQueue<Input> queue;
+    private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
 
     private static boolean printCoverage = false;
     private static boolean printPaths = false;
-    private static boolean printTime = true;
+    private static boolean printTime = false;
+    private static boolean printQueueSize = true;
 
     public static void main(String[] args) throws Exception {
         int count = 0;
         file = args[1];
         cls = Class.forName(args[0]);
-        queue = new LinkedList<Input>();
+        queue = new PriorityQueue<Input>(10, comparator);
         Path path = Paths.get(file);
         byte[] base = Files.readAllBytes(path);
         SystemExitControl.forbidSystemExitCall();
         Data.resetAll();
-        queue.add(new Input(base, false));
         execProgram(base);
+        int score = Data.getLocalBucketSize();
+        queue.add(new Input(base, false, score));
 
         BufferedReader br = new BufferedReader(new FileReader(".branches"));
         for (String line = br.readLine(); line != null; line = br.readLine()) {
@@ -63,7 +67,7 @@ public class JAFL {
             Input input = queue.remove();
             byte[] basic = input.getData();
             System.out.println("Base: " + new String(basic));
-            queue.add(new Input(basic, true));
+            queue.add(new Input(basic, true, input.getScore()));
             byte[] temp = Arrays.copyOf(basic, basic.length);
             if (!input.getEvaluated()) {
                 // System.out.println("Performing Bit Flips...\n");
@@ -88,6 +92,9 @@ public class JAFL {
             }
             if (printTime) {
                 System.out.println("Running Time: " + (System.currentTimeMillis() - preTime) / 1000 + " seconds");
+            }
+            if (printQueueSize) {
+                System.out.println("Queue Size: " + queue.size());
             }
         }
 
@@ -162,7 +169,8 @@ public class JAFL {
             }
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -179,7 +187,8 @@ public class JAFL {
             }
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -199,7 +208,8 @@ public class JAFL {
             }
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -220,7 +230,8 @@ public class JAFL {
             base[j] = (byte) (base[j] ^ 0xFF);
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -237,7 +248,8 @@ public class JAFL {
             base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -259,7 +271,8 @@ public class JAFL {
             base[j + 3] = (byte) (base[j + 3] ^ 0xFF);
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -281,7 +294,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -296,7 +310,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -314,7 +329,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -335,7 +351,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -350,7 +367,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -368,7 +386,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -389,7 +408,8 @@ public class JAFL {
                 base[j] = (byte) interesting_8[i];
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -410,7 +430,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -420,7 +441,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -446,7 +468,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -458,7 +481,8 @@ public class JAFL {
 
                 execProgram(base);
                 if (Data.getNew()) {
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                    int score = Data.getLocalBucketSize();
+                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                     Data.resetTuples();
                     paths++;
                 }
@@ -637,7 +661,8 @@ public class JAFL {
             // System.out.println(base);
             execProgram(base);
             if (Data.getNew()) {
-                queue.add(new Input(Arrays.copyOf(base, base.length), false));
+                int score = Data.getLocalBucketSize();
+                queue.add(new Input(Arrays.copyOf(base, base.length), false, score));
                 Data.resetTuples();
                 paths++;
             }
@@ -672,10 +697,12 @@ class SystemExitControl {
 class Input {
     private byte[] data;
     private boolean evaluated;
+    private int score;
 
-    public Input(byte[] data, boolean evaluated) {
+    public Input(byte[] data, boolean evaluated, int score) {
         this.data = data;
         this.evaluated = evaluated;
+        this.score = score;
     }
 
     public byte[] getData() {
@@ -684,5 +711,23 @@ class Input {
 
     public boolean getEvaluated() {
         return this.evaluated;
+    }
+
+    public int getScore() {
+        return this.score;
+    }
+}
+
+class InputComparator implements Comparator<Input> {
+    @Override
+    public int compare(Input x, Input y) {
+
+        if (x.getScore() > y.getScore()) {
+            return -1;
+        }
+        if (x.getScore() < y.getScore()) {
+            return 1;
+        }
+        return 0;
     }
 }
