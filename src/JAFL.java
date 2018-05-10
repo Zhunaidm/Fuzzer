@@ -31,6 +31,7 @@ public class JAFL {
     private static boolean abort = false;
     private static Class<?> cls;
     private static int paths = 0;
+    private static int count = 0;
     private static String file = "";
     private static PriorityQueue<Input> queue;
     private static Comparator<Input> comparator = new InputComparator();
@@ -42,7 +43,6 @@ public class JAFL {
     private static boolean printQueueSize = true;
 
     public static void main(String[] args) throws Exception {
-        int count = 0;
         file = args[1];
         cls = Class.forName(args[0]);
         queue = new PriorityQueue<Input>(10, comparator);
@@ -53,6 +53,7 @@ public class JAFL {
         execProgram(base);
         int score = Data.getLocalBucketSize();
         queue.add(new Input(base, false, score));
+        new Thread(new OutputGenerator()).start();
 
         BufferedReader br = new BufferedReader(new FileReader(".branches"));
         for (String line = br.readLine(); line != null; line = br.readLine()) {
@@ -84,18 +85,7 @@ public class JAFL {
             }
 
             havoc(temp);
-            if (printCoverage) {
-                System.out.println("Coverage: " + ((double) Data.getSize() / (double) count * 100.0));
-            }
-            if (printPaths) {
-                System.out.println("No Paths: " + paths);
-            }
-            if (printTime) {
-                System.out.println("Running Time: " + (System.currentTimeMillis() - preTime) / 1000 + " seconds");
-            }
-            if (printQueueSize) {
-                System.out.println("Queue Size: " + queue.size());
-            }
+
         }
 
     }
@@ -668,6 +658,33 @@ public class JAFL {
             }
             base = new byte[backup.length];
             System.arraycopy(backup, 0, base, 0, backup.length);
+        }
+    }
+
+    private static class OutputGenerator implements Runnable {
+
+        public void run() {
+            while (true) {
+                if (printCoverage) {
+                    System.out.println("Coverage: " + ((double) Data.getSize() / (double) count * 100.0));
+                }
+                if (printPaths) {
+                    System.out.println("No Paths: " + paths);
+                }
+                if (printTime) {
+                    System.out.println("Running Time: " + (System.currentTimeMillis() - preTime) / 1000 + " seconds");
+                }
+                if (printQueueSize) {
+                    System.out.println("Queue Size: " + queue.size());
+                }
+
+                try {
+
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                    // Do Nothing
+                }
+            }
         }
     }
 }
