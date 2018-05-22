@@ -9,7 +9,7 @@ do
 done
 arraylength=${#program[@]}
 
-export ASM_HOME="/home/zhunaid/ASM/asm-6.0/lib"
+export ASM_HOME="./lib"
 rm -rf .branches
 rm -rf .temp
 javac JAFL.java

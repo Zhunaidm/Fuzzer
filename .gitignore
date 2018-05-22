@@ -22,7 +22,7 @@
 hs_err_pid*
 
 # txt files
-*.txt
+#*.txt
 
 # tmp files
 *.tmp

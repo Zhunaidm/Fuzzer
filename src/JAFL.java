@@ -37,10 +37,10 @@ public class JAFL {
     private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
 
-    private static boolean printCoverage = false;
+    private static boolean printCoverage = true;
     private static boolean printPaths = false;
     private static boolean printTime = false;
-    private static boolean printQueueSize = true;
+    private static boolean printQueueSize = false;
 
     public static void main(String[] args) throws Exception {
         file = args[1];
