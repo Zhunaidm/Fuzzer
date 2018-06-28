@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class Data {
@@ -34,6 +35,16 @@ public class Data {
     public static void resetLocal() {
         localBuckets = null;
         localBuckets = new HashMap<Tuple, Integer>();
+    }
+
+    public static ArrayList<Tuple> getPossibleBranches(String branchName) {
+        ArrayList<Tuple> branches = new ArrayList<Tuple>();
+        for (Tuple tuple : tuples.keySet()) {
+            if (tuple.getSrc().equals(branchName)) {
+                branches.add(tuple);
+            }
+        }
+        return branches;
     }
 
     public static void incCounter() {
