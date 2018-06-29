@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.*;
 
-public class DB_test
+public class DB_test2
 {
     public static void main(String[] args) throws Exception {
        /* if (args.length != 1) {
@@ -28,18 +28,17 @@ public class DB_test
                             if (word.charAt(5) == 'e') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'f') {
-                                        System.out.println("Aborting ...");
-                                        System.out.println("Found " + word);
-                                        
-                                        System.exit(0);
-                                        System.out.println("This code shouldn't be reached.");
-                                    }
+                                       
+                                  
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+        } else if (word.charAt(0) == 'h') {
+
         }
 
 

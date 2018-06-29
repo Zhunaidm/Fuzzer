@@ -47,6 +47,10 @@ public class Data {
         return branches;
     }
 
+    public static ArrayList<Tuple> getTuples() {
+        return new ArrayList<Tuple>(tuples.keySet());
+    }
+
     public static void incCounter() {
         counter++;
     }
