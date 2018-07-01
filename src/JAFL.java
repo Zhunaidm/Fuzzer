@@ -16,6 +16,8 @@ import java.util.Queue;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 import java.nio.ByteBuffer;
 
@@ -33,7 +35,8 @@ public class JAFL {
     private static int paths = 0;
     private static int count = 0;
     private static String file = "";
-    private static PriorityQueue<Input> queue;
+    //private static PriorityQueue<Input> queue;
+    private static Queue<Input> queue;
     private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
 
@@ -45,7 +48,8 @@ public class JAFL {
     public static void main(String[] args) throws Exception {
         file = args[1];
         cls = Class.forName(args[0]);
-        queue = new PriorityQueue<Input>(10, comparator);
+        //queue = new PriorityQueue<Input>(10, comparator);
+        queue = new LinkedList<Input>();
         Path path = Paths.get(file);
         byte[] base = Files.readAllBytes(path);
         SystemExitControl.forbidSystemExitCall();
@@ -95,6 +99,7 @@ public class JAFL {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
             Data.resetLocal();
+            Data.setCurrentInput(base);
             FileOutputStream fos = new FileOutputStream(".temp");
             fos.write(base);
             fos.close();
@@ -113,6 +118,32 @@ public class JAFL {
         } catch (Exception e) {
         }
 
+    }
+
+    public static void cullQueue() {
+        ArrayList<byte[]> list = new ArrayList<byte[]>(queue);
+        ArrayList<Tuple> tuples = Data.getTuples();
+        Set<byte[]> newInputs = new HashSet<byte[]>();
+        Set<Tuple> evaluatedTuples = new HashSet<Tuple>();
+        int score = 0;
+        byte[] winningInput;
+
+        for (Tuple tuple : tuples) {
+            score = 0;
+            if (!evaluatedTuples.contains(tuple)) {
+                for (byte[] input: list) {
+                    ArrayList<Tuple> inputList = Data.getInputList(input);
+                    if (inputList.contains(tuple) && inputList.size() > score && !newInputs.contains(input)) {
+                        score = inputList.size();
+                        winningInput = input;
+                    }
+                }
+                evaluatedTuples.addAll(Data.getInputList(winningInput));
+                newInputs.add(winningInput);
+            }
+        }
+
+        queue = new LinkedList<Input>(newInputs);
     }
 
     // Remove a byte from the byte array.
@@ -746,5 +777,38 @@ class InputComparator implements Comparator<Input> {
             return 1;
         }
         return 0;
+    }
+}
+class Tuple {
+    private String src;
+    private String dest;
+
+    public Tuple(String src, String dest) {
+        this.src = src;
+        this.dest = dest;
+    }
+
+    public String getSrc() {
+        return this.src;
+    }
+
+    public String getDest() {
+        return this.dest;
+    }
+
+    @Override
+    public int hashCode() {
+        return src.hashCode() + dest.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Tuple tuple = (Tuple) obj;
+        if (this.src.equals(tuple.getSrc()) && this.dest.equals(tuple.getDest())) {
+            return true;
+        } else {
+            return false;
+        }
+
     }
 }

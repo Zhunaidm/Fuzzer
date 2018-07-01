@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -7,7 +8,9 @@ public class Data {
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static Map<Tuple, bucket> buckets = new HashMap<Tuple, bucket>();
     private static Map<Tuple, Integer> localBuckets;
+    private static Map<byte[], ArrayList<Tuple>> inputTuples;
     private static String prevBranch = "Source";
+    private static byte[] currentInput = null;    
     private static boolean newTuple = false;
     private static int branchNo = 0;
     private static int counter = 0;
@@ -63,6 +66,14 @@ public class Data {
         return tuples.size();
     }
 
+    public static byte[] getCurrentInput() {
+        return currentInput;
+    }
+
+    public static void setCurrentInput(byte[] input) {
+        currentInput = input;
+    }
+
     public static int getNextBranchNo() {
         branchNo++;
         return branchNo;
@@ -71,6 +82,7 @@ public class Data {
     public static void resetBranchNo() {
         branchNo = 0;
     }
+
 
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
@@ -140,7 +152,16 @@ public class Data {
     }
 
     public static boolean getNew() {
+        if (newTuple) {
+            Set<Tuple> set = localBuckets.keySet(); 
+            ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
+            inputTuples.put(currentInput, tuples);
+        }
         return newTuple;
+    }
+
+    public static ArrayList<Tuple> getInputList(byte[] input) {
+        return inputTuples.get(base);
     }
 
     public enum bucket {
