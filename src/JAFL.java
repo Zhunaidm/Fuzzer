@@ -18,6 +18,8 @@ import java.util.PriorityQueue;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.ArrayList;
 
 import java.nio.ByteBuffer;
 
@@ -39,6 +41,7 @@ public class JAFL {
     private static Queue<Input> queue;
     private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
+    private static int runNumber = 0;
 
     private static boolean printCoverage = true;
     private static boolean printPaths = false;
@@ -55,6 +58,8 @@ public class JAFL {
         SystemExitControl.forbidSystemExitCall();
         Data.resetAll();
         execProgram(base);
+        Data.addInitialList(base);
+    
         int score = Data.getLocalBucketSize();
         queue.add(new Input(base, false, score));
         new Thread(new OutputGenerator()).start();
@@ -67,7 +72,7 @@ public class JAFL {
         }
         preTime = System.currentTimeMillis();
         while (!abort) {
-
+            runNumber++;            
             Data.resetTuples();
             Input input = queue.remove();
             byte[] basic = input.getData();
@@ -89,6 +94,13 @@ public class JAFL {
             }
 
             havoc(temp);
+            
+            
+            if (runNumber % 5 == 0) {
+                System.out.println("Before Size: " + queue.size());
+                cullQueue();
+                System.out.println("After Size: " + queue.size());
+            }
 
         }
 
@@ -107,12 +119,12 @@ public class JAFL {
 
         } catch (SystemExitControl.ExitTrappedException e) {
             System.out.println("Preventing abort...");
-            abort = true;
+           // abort = true;
         } catch (InvocationTargetException ite) {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
 
                 System.out.println("Preventing abort...");
-                abort = true;
+                //abort = true;
             }
 
         } catch (Exception e) {
@@ -121,29 +133,40 @@ public class JAFL {
     }
 
     public static void cullQueue() {
-        ArrayList<byte[]> list = new ArrayList<byte[]>(queue);
+        ArrayList<Input> list = new ArrayList<Input>(queue);
         ArrayList<Tuple> tuples = Data.getTuples();
-        Set<byte[]> newInputs = new HashSet<byte[]>();
+        Set<Input> newInputs = new HashSet<Input>();
         Set<Tuple> evaluatedTuples = new HashSet<Tuple>();
+        boolean evaluated = false;
         int score = 0;
-        byte[] winningInput;
+        byte[] winningInput = null;
 
         for (Tuple tuple : tuples) {
             score = 0;
             if (!evaluatedTuples.contains(tuple)) {
-                for (byte[] input: list) {
-                    ArrayList<Tuple> inputList = Data.getInputList(input);
-                    if (inputList.contains(tuple) && inputList.size() > score && !newInputs.contains(input)) {
+                for (Input input: list) {
+                    byte[] inputArr = input.getData();
+                    ArrayList<Tuple> inputList = Data.getInputList(inputArr);
+                    if (inputList == null && list.size() != 1) {
+                        continue;
+                    } else if (inputList == null && list.size() == 1) {
+                        newInputs.add(input);
+                        break;
+                    }
+                    
+                    if (inputList.contains(tuple) && (inputList.size() > score)) {
                         score = inputList.size();
-                        winningInput = input;
+                        winningInput = inputArr;
+                        evaluated = input.getEvaluated();
                     }
                 }
                 evaluatedTuples.addAll(Data.getInputList(winningInput));
-                newInputs.add(winningInput);
+                newInputs.add(new Input(winningInput, evaluated, score));
             }
         }
-
         queue = new LinkedList<Input>(newInputs);
+        
+        
     }
 
     // Remove a byte from the byte array.

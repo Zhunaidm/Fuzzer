@@ -40,6 +40,26 @@ public class DB_test
                     }
                 }
             }
+        } else if (word.charAt(0) == 'f') {
+            if (word.charAt(1) == 'u') {
+                if (word.charAt(2) == 'n') {
+                    if (word.charAt(3) == 'd') {
+                        if (word.charAt(4) == 'a') {
+                            if (word.charAt(5) == 'z') {
+                                if (word.charAt(6) == 'e') {
+                                    if (word.charAt(7) == 'd') {
+                                        System.out.println("Aborting ...");
+                                        System.out.println("Found " + word);
+                                        
+                                        System.exit(0);
+                                        System.out.println("This code shouldn't be reached.");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
 

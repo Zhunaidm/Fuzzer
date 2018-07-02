@@ -2,13 +2,14 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Arrays;
 
 public class Data {
 
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static Map<Tuple, bucket> buckets = new HashMap<Tuple, bucket>();
     private static Map<Tuple, Integer> localBuckets;
-    private static Map<byte[], ArrayList<Tuple>> inputTuples;
+    private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
     private static String prevBranch = "Source";
     private static byte[] currentInput = null;    
     private static boolean newTuple = false;
@@ -155,13 +156,20 @@ public class Data {
         if (newTuple) {
             Set<Tuple> set = localBuckets.keySet(); 
             ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
-            inputTuples.put(currentInput, tuples);
+            inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), tuples);
+            
         }
         return newTuple;
     }
 
+    public static void addInitialList(byte[] input) {
+        Set<Tuple> set = localBuckets.keySet(); 
+        ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
+        inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(input, input.length)), tuples);
+    }
+
     public static ArrayList<Tuple> getInputList(byte[] input) {
-        return inputTuples.get(base);
+        return inputTuples.get(new ByteArrayWrapper(input));
     }
 
     public enum bucket {
@@ -170,36 +178,34 @@ public class Data {
 
 }
 
-class Tuple {
-    private String src;
-    private String dest;
+class ByteArrayWrapper
+{
+    private final byte[] data;
 
-    public Tuple(String src, String dest) {
-        this.src = src;
-        this.dest = dest;
+    public ByteArrayWrapper(byte[] data)
+    {
+        this.data = data;
     }
 
-    public String getSrc() {
-        return this.src;
-    }
-
-    public String getDest() {
-        return this.dest;
+    public byte[] getData() {
+        return this.data;
     }
 
     @Override
-    public int hashCode() {
-        return src.hashCode() + dest.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        Tuple tuple = (Tuple) obj;
-        if (this.src.equals(tuple.getSrc()) && this.dest.equals(tuple.getDest())) {
-            return true;
-        } else {
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ByteArrayWrapper))
+        {
             return false;
         }
+        return Arrays.equals(data, ((ByteArrayWrapper)other).data);
+    }
 
+    @Override
+    public int hashCode()
+    {
+        return Arrays.hashCode(data);
     }
 }
+
+
