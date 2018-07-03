@@ -8,19 +8,26 @@ public class Data {
 
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static Map<Tuple, bucket> buckets = new HashMap<Tuple, bucket>();
+    private static Map<Tuple,  Integer> worstCaseBuckets = new HashMap<Tuple, Integer>();
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
     private static String prevBranch = "Source";
     private static byte[] currentInput = null;    
     private static boolean newTuple = false;
+    private static boolean worstCaseMode = false;
     private static int branchNo = 0;
     private static int counter = 0;
 
     public static void resetAll() {
         tuples = null;
         tuples = new HashMap<Tuple, String>();
-        buckets = null;
-        buckets = new HashMap<Tuple, bucket>();
+        if (worstCaseMode) {
+            worstCaseBuckets = null;
+            worstCaseBuckets = new HashMap<Tuple, Integer>();
+        } else {
+            buckets = null;
+            buckets = new HashMap<Tuple, bucket>();
+        }
         prevBranch = "Source";
         newTuple = false;
         branchNo = 0;
@@ -75,6 +82,10 @@ public class Data {
         currentInput = input;
     }
 
+    public static setWorstCaseMode(boolean result) {
+        worstCaseMode = result;
+    }
+
     public static int getNextBranchNo() {
         branchNo++;
         return branchNo;
@@ -88,21 +99,31 @@ public class Data {
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
-            // System.out.println("src: " + src + " dest: " + dest);
             tuples.put(tuple, "");
-            buckets.put(tuple, bucket.ONE);
+            if (worstCaseMode) {
+                worstCaseBuckets.put(tuple, 1);
+            } else {
+                buckets.put(tuple, bucket.ONE);
+            }
             localBuckets.put(tuple, 1);
             newTuple = true;
         } else if (!localBuckets.containsKey(tuple) && !src.equals(dest)) {
             localBuckets.put(tuple, 1);
         } else {
             incrementBucketCount(tuple);
-            bucket type = getBucketValue(tuple);
-            if (type.ordinal() > buckets.get(tuple).ordinal()) {
-                buckets.put(tuple, type);
-                // System.out.println("New Bucket from: " + type + " src: " + src + " dest: " +
-                // dest);
-                newTuple = true;
+            if (worstCaseMode) {
+                int bucketCount = getBucketCount(tuple);
+                if (bucketCount > worstCaseBuckets.get(Tuple)) {
+                    worstCaseBuckets.put(tuple. bucketCount);
+                    newTuple = true;
+                }
+            
+            } else {
+                bucket type = getBucketValue(tuple);
+                if (type.ordinal() > buckets.get(tuple).ordinal()) {
+                    buckets.put(tuple, type);                
+                    newTuple = true;
+             }
             }
         }
     }
@@ -138,6 +159,10 @@ public class Data {
         }
 
         return type;
+    }
+
+    public static int getBucketCount(Tuple tuple) {
+        return localBuckets.get(tuple);
     }
 
     public static boolean containsTuple(String src, String dest) {

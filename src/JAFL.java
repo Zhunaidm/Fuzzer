@@ -47,8 +47,12 @@ public class JAFL {
     private static boolean printPaths = false;
     private static boolean printTime = false;
     private static boolean printQueueSize = false;
+    private static boolean worstCaseMode = true;
 
     public static void main(String[] args) throws Exception {
+        if (worstCaseMode) {
+            Data.setWorstCaseMode(true);
+        }
         file = args[1];
         cls = Class.forName(args[0]);
         //queue = new PriorityQueue<Input>(10, comparator);
