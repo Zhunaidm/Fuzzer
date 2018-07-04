@@ -11,6 +11,7 @@ public class Data {
     private static Map<Tuple,  Integer> worstCaseBuckets = new HashMap<Tuple, Integer>();
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
+    private static Map<ByteArrayWrapper, Integer> worstCaseScores = new HashMap<ByteArrayWrapper, Integer>();
     private static String prevBranch = "Source";
     private static byte[] currentInput = null;    
     private static boolean newTuple = false;
@@ -82,7 +83,7 @@ public class Data {
         currentInput = input;
     }
 
-    public static setWorstCaseMode(boolean result) {
+    public static void setWorstCaseMode(boolean result) {
         worstCaseMode = result;
     }
 
@@ -113,8 +114,8 @@ public class Data {
             incrementBucketCount(tuple);
             if (worstCaseMode) {
                 int bucketCount = getBucketCount(tuple);
-                if (bucketCount > worstCaseBuckets.get(Tuple)) {
-                    worstCaseBuckets.put(tuple. bucketCount);
+                if (bucketCount > worstCaseBuckets.get(tuple)) {
+                    worstCaseBuckets.put(tuple, bucketCount);
                     newTuple = true;
                 }
             
@@ -182,19 +183,40 @@ public class Data {
             Set<Tuple> set = localBuckets.keySet(); 
             ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
             inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), tuples);
-            
+
+            if (worstCaseMode) {
+                ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
+                int score = 0;
+                for (Integer value : bucketValues) {
+                    score += value;
+                }
+                worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
+            }            
         }
         return newTuple;
     }
 
     public static void addInitialList(byte[] input) {
-        Set<Tuple> set = localBuckets.keySet(); 
-        ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
-        inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(input, input.length)), tuples);
+        if (worstCaseMode) {
+            ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
+            int score = 0;
+            for (Integer value : bucketValues) {
+                score += value;
+            }
+            worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
+        } else {          
+            Set<Tuple> set = localBuckets.keySet(); 
+            ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
+            inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(input, input.length)), tuples);
+        }
     }
 
     public static ArrayList<Tuple> getInputList(byte[] input) {
         return inputTuples.get(new ByteArrayWrapper(input));
+    }
+
+    public static int getWorstCaseScore(byte[] input) {
+        return worstCaseScores.get(new ByteArrayWrapper(input));
     }
 
     public enum bucket {

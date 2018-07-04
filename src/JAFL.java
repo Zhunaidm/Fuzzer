@@ -39,15 +39,16 @@ public class JAFL {
     private static String file = "";
     //private static PriorityQueue<Input> queue;
     private static Queue<Input> queue;
-    private static Comparator<Input> comparator = new InputComparator();
+   // private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
     private static int runNumber = 0;
 
-    private static boolean printCoverage = true;
+    private static boolean printCoverage = false;
     private static boolean printPaths = false;
     private static boolean printTime = false;
     private static boolean printQueueSize = false;
     private static boolean worstCaseMode = true;
+    private static boolean printScore = true;
 
     public static void main(String[] args) throws Exception {
         if (worstCaseMode) {
@@ -63,8 +64,12 @@ public class JAFL {
         Data.resetAll();
         execProgram(base);
         Data.addInitialList(base);
-    
-        int score = Data.getLocalBucketSize();
+        int score = 0;
+        if (worstCaseMode) {
+            score = Data.getWorstCaseScore(base);
+        } else {
+            score = Data.getLocalBucketSize();
+        }
         queue.add(new Input(base, false, score));
         new Thread(new OutputGenerator()).start();
 
@@ -74,6 +79,7 @@ public class JAFL {
             line = line.trim();
             count += Integer.parseInt(line);
         }
+        br.close();
         preTime = System.currentTimeMillis();
         while (!abort) {
             runNumber++;            
@@ -81,6 +87,9 @@ public class JAFL {
             Input input = queue.remove();
             byte[] basic = input.getData();
             System.out.println("Base: " + new String(basic));
+            if (worstCaseMode) {
+                System.out.println("Score: " + Data.getWorstCaseScore(basic));
+            }
             queue.add(new Input(basic, true, input.getScore()));
             byte[] temp = Arrays.copyOf(basic, basic.length);
             if (!input.getEvaluated()) {
@@ -140,9 +149,11 @@ public class JAFL {
         ArrayList<Input> list = new ArrayList<Input>(queue);
         ArrayList<Tuple> tuples = Data.getTuples();
         Set<Input> newInputs = new HashSet<Input>();
+        Set<Input> worstInputs = new HashSet<Input>();
         Set<Tuple> evaluatedTuples = new HashSet<Tuple>();
         boolean evaluated = false;
         int score = 0;
+        int maxScore = 0;
         byte[] winningInput = null;
 
         for (Tuple tuple : tuples) {
@@ -157,15 +168,35 @@ public class JAFL {
                         newInputs.add(input);
                         break;
                     }
-                    
-                    if (inputList.contains(tuple) && (inputList.size() > score)) {
-                        score = inputList.size();
-                        winningInput = inputArr;
-                        evaluated = input.getEvaluated();
+                    if (worstCaseMode) {
+                        if (inputList.contains(tuple) && (Data.getWorstCaseScore(inputArr) > score)) {
+                            score = Data.getWorstCaseScore(inputArr);
+                            winningInput = inputArr;
+                            evaluated = input.getEvaluated();
+                            worstInputs.add(input);
+                            if (maxScore < score) {
+                                maxScore = score;
+                            }
+                        }
+                    } else {
+                        if (inputList.contains(tuple) && (inputList.size() > score)) {
+                            score = inputList.size();
+                            winningInput = inputArr;
+                            evaluated = input.getEvaluated();
+                            
+                       }
                     }
                 }
                 evaluatedTuples.addAll(Data.getInputList(winningInput));
                 newInputs.add(new Input(winningInput, evaluated, score));
+            }
+        }
+        if (worstCaseMode) {
+            for (Input input: list) {
+                if (!worstInputs.contains(input) && Data.getWorstCaseScore(input.getData()) > maxScore ) {
+                    worstInputs.add(input);
+                    newInputs.add(new Input(input.getData(), input.getEvaluated(), Data.getWorstCaseScore(input.getData())));
+                }
             }
         }
         queue = new LinkedList<Input>(newInputs);
