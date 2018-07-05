@@ -186,10 +186,15 @@ public class Data {
 
             if (worstCaseMode) {
                 ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
+                ArrayList<Tuple> bucketTuples = new ArrayList<Tuple>(localBuckets.keySet());
                 int score = 0;
-                for (Integer value : bucketValues) {
-                    score += value;
+                //for (Integer value : bucketValues) {
+                    System.out.println("INPUT: " + new String(currentInput));
+                for (int i = 0; i < bucketValues.size(); i++) {    
+                    System.out.println("Src: " + bucketTuples.get(i).getSrc() + " Dest: " + bucketTuples.get(i).getDest() + " Score: " + bucketValues.get(i) );
+                    score += bucketValues.get(i);
                 }
+                //}
                 worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
             }            
         }

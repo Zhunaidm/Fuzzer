@@ -4,11 +4,7 @@ import java.util.*;
 public class test_worst
 {
     public static void main(String[] args) throws Exception {
-       /* if (args.length != 1) {
-            System.out.println("Please provide filename as argument.");
-            System.exit(0);
-        }*/
-
+      
         Scanner sc = new Scanner(new File(args[0]));
         int value = sc.nextInt();
         sc.close();
