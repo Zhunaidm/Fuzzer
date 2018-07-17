@@ -1,10 +1,13 @@
+import java.util.Hashtable;
+
 import java.io.File;
 import java.util.Scanner;
 
 public class WorstHash {
 
     private static final int TABLE_SIZE = 1001;
-    private static entry_t[] hashtable = new entry_t[TABLE_SIZE];
+    private static entry_t[] hashtable;
+    static int count = 0;
     
     public static int compute_hash(String str) {
         int hash = 0;
@@ -20,6 +23,7 @@ public class WorstHash {
         int index = bucket;
 
         while (hashtable[index] != null) {
+            count++;
             if (hashtable[index].getKey().compareTo(word) == 0) {
                 hashtable[index].incValue();
                 return;
@@ -32,12 +36,15 @@ public class WorstHash {
 
     }
     public static void main(String args[]) throws Exception {
+            hashtable = new entry_t[TABLE_SIZE];
+            count = 0;
             String filename = args[0];
 
             Scanner sc = new Scanner(new File(args[0]));
             while (sc.hasNext()) {
                 add_word(sc.next());
             }
+           // System.out.println("Final count: " + count);
     }
 }
 
