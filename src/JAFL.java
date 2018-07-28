@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.lang.Class;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.Thread;
 
 import java.util.Random;
 import java.util.Queue;
@@ -34,28 +35,30 @@ public class JAFL {
             2147483647 };
     private static boolean abort = false;
     private static Class<?> cls;
+    private static String className;
     private static int paths = 0;
-    private static int count = 0;
+    private static int totalPaths = 0;
     private static String file = "";
     //private static PriorityQueue<Input> queue;
     private static Queue<Input> queue;
    // private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
     private static int runNumber = 0;
-
-    private static boolean printCoverage = false;
-    private static boolean printPaths = false;
-    private static boolean printTime = false;
-    private static boolean printQueueSize = false;
-    private static boolean worstCaseMode = true;
-    private static boolean printScore = true;
+    private static boolean worstCaseMode = false;
+    private static int currentOperation = 0;
+    private static Queue<byte[]> crashingInputs = new LinkedList<byte[]>();
+ 
+    
 
     public static void main(String[] args) throws Exception {
         if (worstCaseMode) {
             Data.setWorstCaseMode(true);
         }
+        className = args[0];
+        (new Thread(new FuzzUI())).start();
+
         file = args[1];
-        cls = Class.forName(args[0]);
+        cls = Class.forName(className);
         //queue = new PriorityQueue<Input>(10, comparator);
         queue = new LinkedList<Input>();
         Path path = Paths.get(file);
@@ -71,13 +74,11 @@ public class JAFL {
             score = Data.getLocalBucketSize();
         }
         queue.add(new Input(base, false, score));
-        new Thread(new OutputGenerator()).start();
-
         BufferedReader br = new BufferedReader(new FileReader(".branches"));
         for (String line = br.readLine(); line != null; line = br.readLine()) {
             line = (line.split(":"))[1];
             line = line.trim();
-            count += Integer.parseInt(line);
+            totalPaths += Integer.parseInt(line);
         }
         br.close();
         preTime = System.currentTimeMillis();
@@ -87,36 +88,74 @@ public class JAFL {
             Input input = queue.remove();
             byte[] basic = input.getData();
             System.out.println("Base: " + new String(basic));
-            if (worstCaseMode) {
-                System.out.println("Score: " + Data.getWorstCaseScore(basic));
-            }
             queue.add(new Input(basic, true, input.getScore()));
             byte[] temp = Arrays.copyOf(basic, basic.length);
             if (!input.getEvaluated()) {
                 // System.out.println("Performing Bit Flips...\n");
+                currentOperation = 0;
                 flipBits(temp);
 
                 // System.out.println("Performing Byte Flips...\n");
+                currentOperation = 1;
                 flipBytes(temp);
 
+                currentOperation = 2;
                 arithInc(temp);
 
+                currentOperation = 3;
                 arithDec(temp);
 
+                currentOperation = 4;
                 replaceInteresting(temp);
             }
-
+            currentOperation = 5;
             havoc(temp);
             
             
             if (runNumber % 5 == 0) {
-                System.out.println("Before Size: " + queue.size());
                 cullQueue();
-                System.out.println("After Size: " + queue.size());
             }
 
         }
 
+    }
+
+    public static String getClassName() {
+        return className;
+    }
+
+    public static int getMode() {
+        return worstCaseMode ? 1 : 0;
+    }
+
+    public static double getExecutionTime() {
+        return (System.currentTimeMillis() - preTime) / 1000;
+    }
+
+    public static int getCurrentOperation() {
+        return currentOperation;
+    }
+
+    public static double getCoverage() {
+        if (totalPaths == 0) {
+            return 0;
+        }
+        return Math.round(((paths / (double) totalPaths) * 100) * 100.0) / 100.0;
+    }
+
+    public static int getNumberPaths() {
+        return paths;
+    }
+
+    public static int getQueueSize() {
+        if (queue == null) {
+            return 0;
+        }
+        return queue.size();
+    }
+
+    public static int getNumberCrashes() {
+        return crashingInputs.size();
     }
 
     public static void execProgram(byte[] base) {
@@ -131,11 +170,16 @@ public class JAFL {
             meth.invoke(null, (Object) (new String[] { ".temp" }));
 
         } catch (SystemExitControl.ExitTrappedException e) {
+            if (!crashingInputs.contains(base)) {
+                crashingInputs.add(base);
+            }
             System.out.println("Preventing abort...");
            // abort = true;
         } catch (InvocationTargetException ite) {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
-
+                if (!crashingInputs.contains(base)) {
+                    crashingInputs.add(base);
+                }
                 System.out.println("Preventing abort...");
                 //abort = true;
             }
@@ -750,32 +794,6 @@ public class JAFL {
         }
     }
 
-    private static class OutputGenerator implements Runnable {
-
-        public void run() {
-            while (true) {
-                if (printCoverage) {
-                    System.out.println("Coverage: " + ((double) Data.getSize() / (double) count * 100.0));
-                }
-                if (printPaths) {
-                    System.out.println("No Paths: " + paths);
-                }
-                if (printTime) {
-                    System.out.println("Running Time: " + (System.currentTimeMillis() - preTime) / 1000 + " seconds");
-                }
-                if (printQueueSize) {
-                    System.out.println("Queue Size: " + queue.size());
-                }
-
-                try {
-
-                    Thread.sleep(2000);
-                } catch (Exception e) {
-                    // Do Nothing
-                }
-            }
-        }
-    }
 }
 
 class SystemExitControl {
@@ -787,7 +805,9 @@ class SystemExitControl {
         final SecurityManager securityManager = new SecurityManager() {
             @Override
             public void checkPermission(Permission permission) {
-                if (permission.getName().contains("exitVM")) {
+                if (permission.getName().contains("exitVM.100")) {
+
+                } else if (permission.getName().contains("exitVM")) {
                     throw new ExitTrappedException();
                 }
             }
