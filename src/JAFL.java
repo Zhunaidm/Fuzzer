@@ -53,6 +53,14 @@ public class JAFL {
     
 
     public static void main(String[] args) throws Exception {
+        if (args.length == 3) {
+            System.out.println(args[2]);
+            if (args[2].equals("-b")) {
+                worstCaseMode = false;
+            } else if (args[2].equals("-w")) {
+                worstCaseMode = true;
+            }
+        }
         if (worstCaseMode) {
             Data.setWorstCaseMode(true);
         }
@@ -90,6 +98,7 @@ public class JAFL {
             Input input = queue.remove();
             byte[] basic = input.getData();
             System.out.println("Base: " + new String(basic));
+            System.out.println("ASCII: " + input);
             queue.add(new Input(basic, true, input.getScore()));
             byte[] temp = Arrays.copyOf(basic, basic.length);
             if (!input.getEvaluated()) {
@@ -880,6 +889,15 @@ class Input {
 
     public int getScore() {
         return this.score;
+    }
+
+    public String toString() {
+        String out = "[";
+        for (int i = 0; i < data.length; i++) {
+           out += data[i]+",";
+        }
+        out += "] = " + score;
+        return out;
     }
 }
 
