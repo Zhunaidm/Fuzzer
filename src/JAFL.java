@@ -2,9 +2,11 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 
 import java.lang.Class;
@@ -140,7 +142,7 @@ public class JAFL {
         if (totalPaths == 0) {
             return 0;
         }
-        return Math.round(((paths / (double) totalPaths) * 100) * 100.0) / 100.0;
+        return Math.round(((Data.getSize() / (double) totalPaths) * 100) * 100.0) / 100.0;
     }
 
     public static int getNumberPaths() {
@@ -158,7 +160,7 @@ public class JAFL {
         return crashingInputs.size();
     }
 
-    public static void execProgram(byte[] base) {
+    public static void execProgram(byte[] base) throws IOException {
         try {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();
@@ -168,10 +170,18 @@ public class JAFL {
             fos.write(base);
             fos.close();
             meth.invoke(null, (Object) (new String[] { ".temp" }));
+            if (Data.getNew()) {
+                if (worstCaseMode) {
+                    saveResult(base, 2);
+                } else {
+                    saveResult(base, 0);
+                }
+            }
 
         } catch (SystemExitControl.ExitTrappedException e) {
             if (!crashingInputs.contains(base)) {
                 crashingInputs.add(base);
+                saveResult(base, 1);
             }
             System.out.println("Preventing abort...");
            // abort = true;
@@ -179,6 +189,7 @@ public class JAFL {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
                 if (!crashingInputs.contains(base)) {
                     crashingInputs.add(base);
+                    saveResult(base, 1);
                 }
                 System.out.println("Preventing abort...");
                 //abort = true;
@@ -187,6 +198,34 @@ public class JAFL {
         } catch (Exception e) {
         }
 
+    }
+
+    public static void saveResult(byte[] result, int type) throws IOException {
+        File inFile = new File(".temp");
+        File outFile;
+
+        switch (type) {
+            case 0:
+                // Save inputs with new tuples.
+                outFile = new File("output/" + className + "/" + className + "_output" + paths + ".txt");
+                outFile.mkdirs(); 
+                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                break;
+            case 1:
+                // Save inputs which crash.
+                outFile = new File("output/" + className + "/" + className + "_error" + crashingInputs.size() + ".txt");
+                outFile.mkdirs(); 
+                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                break;
+            case 2:
+                // Save Worst case inputs with higher score.
+                outFile = new File("output/" + className + "/" + className + "_worst" + paths + ".txt");
+                outFile.mkdirs(); 
+                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                break;
+            default:
+                break;
+        }
     }
 
     public static void cullQueue() {
@@ -263,7 +302,7 @@ public class JAFL {
     }
 
     // Add a byte from the byte array.
-    public static byte[] addByte(byte[] base, byte temp, int index) {
+    public static byte[] addByte(byte[] base, byte temp, int index) throws IOException {
         int count = 0;
         byte[] newBase = new byte[base.length + 1];
         for (int i = 0; i < newBase.length; i++) {
@@ -278,7 +317,7 @@ public class JAFL {
     }
 
     // Replace a byte from the byte array.
-    public static byte[] replaceByte(byte[] base, byte temp, int index) {
+    public static byte[] replaceByte(byte[] base, byte temp, int index) throws IOException {
         base[index] = temp;
         return base;
     }
@@ -523,7 +562,7 @@ public class JAFL {
 
     }
 
-    public static void replaceInteresting(byte[] base) {
+    public static void replaceInteresting(byte[] base) throws IOException {
         // Setting 1 byte integers
         for (int i = 0; i < interesting_8.length; i++) {
             for (int j = 0; j < base.length; j++) {
@@ -620,7 +659,7 @@ public class JAFL {
 
     }
 
-    public static void havoc(byte[] base) {
+    public static void havoc(byte[] base) throws IOException {
         Random rand = new Random();
         int byteNum, tmp;
         byte[] temp, backup = new byte[base.length];
