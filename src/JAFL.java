@@ -48,7 +48,7 @@ public class JAFL {
     private static int runNumber = 0;
     private static boolean worstCaseMode = false;
     private static int currentOperation = 0;
-    private static Queue<byte[]> crashingInputs = new LinkedList<byte[]>();
+    private static ByteSet crashingInputs = new ByteSet();
  
     
 
@@ -188,16 +188,16 @@ public class JAFL {
             }
 
         } catch (SystemExitControl.ExitTrappedException e) {
-            if (!crashingInputs.contains(base)) {
-                crashingInputs.add(base);
+            if (!crashingInputs.containsByteArray(base)) {
+                crashingInputs.add(Arrays.copyOf(base, base.length));
                 saveResult(base, 1);
             }
             System.out.println("Preventing abort...");
            // abort = true;
         } catch (InvocationTargetException ite) {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
-                if (!crashingInputs.contains(base)) {
-                    crashingInputs.add(base);
+                if (!crashingInputs.containsByteArray(base)) {
+                    crashingInputs.add(Arrays.copyOf(base, base.length));
                     saveResult(base, 1);
                 }
                 System.out.println("Preventing abort...");
@@ -945,5 +945,16 @@ class Tuple {
             return false;
         }
 
+    }
+}
+
+class ByteSet extends HashSet<byte[]> {
+    public boolean containsByteArray(byte[] input) {
+        for(byte[] base : this ) {
+            if(Arrays.equals(base, input)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
