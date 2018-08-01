@@ -10,12 +10,12 @@ public class Data {
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static Map<Tuple, bucket> buckets = new HashMap<Tuple, bucket>();
     private static Set<String> branches = new HashSet<String>();
-    private static Map<Tuple,  Integer> worstCaseBuckets = new HashMap<Tuple, Integer>();
+    private static Map<Tuple, Integer> worstCaseBuckets = new HashMap<Tuple, Integer>();
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
     private static Map<ByteArrayWrapper, Integer> worstCaseScores = new HashMap<ByteArrayWrapper, Integer>();
     private static String prevBranch = "Source";
-    private static byte[] currentInput = null;    
+    private static byte[] currentInput = null;
     private static boolean newTuple = false;
     private static boolean worstCaseMode = false;
     private static int branchNo = 0;
@@ -104,13 +104,16 @@ public class Data {
         branchNo = 0;
     }
 
-
     public static void addTuple(String src, String dest) {
         Tuple tuple = new Tuple(src, dest);
+        if (!src.equals("Source")) {
+            branches.add(src);
+        }
+        if (!dest.equals("Source")) {
+            branches.add(dest);
+        }
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
             tuples.put(tuple, "");
-            branches.add(src);
-            branches.add(dest);
             if (worstCaseMode) {
                 worstCaseBuckets.put(tuple, 1);
             } else {
@@ -128,13 +131,13 @@ public class Data {
                     worstCaseBuckets.put(tuple, bucketCount);
                     newTuple = true;
                 }
-            
+
             } else {
                 bucket type = getBucketValue(tuple);
                 if (type.ordinal() > buckets.get(tuple).ordinal()) {
-                    buckets.put(tuple, type);                
+                    buckets.put(tuple, type);
                     newTuple = true;
-             }
+                }
             }
         }
     }
@@ -190,7 +193,7 @@ public class Data {
 
     public static boolean getNew() {
         if (newTuple) {
-            Set<Tuple> set = localBuckets.keySet(); 
+            Set<Tuple> set = localBuckets.keySet();
             ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
             inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), tuples);
 
@@ -198,15 +201,16 @@ public class Data {
                 ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
                 ArrayList<Tuple> bucketTuples = new ArrayList<Tuple>(localBuckets.keySet());
                 int score = 0;
-                //for (Integer value : bucketValues) {
-                    System.out.println("INPUT: " + new String(currentInput));
-                for (int i = 0; i < bucketValues.size(); i++) {    
-                    System.out.println("Src: " + bucketTuples.get(i).getSrc() + " Dest: " + bucketTuples.get(i).getDest() + " Score: " + bucketValues.get(i) );
+                // for (Integer value : bucketValues) {
+                System.out.println("INPUT: " + new String(currentInput));
+                for (int i = 0; i < bucketValues.size(); i++) {
+                    System.out.println("Src: " + bucketTuples.get(i).getSrc() + " Dest: "
+                            + bucketTuples.get(i).getDest() + " Score: " + bucketValues.get(i));
                     score += bucketValues.get(i);
                 }
-                //}
+                // }
                 worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
-            }            
+            }
         }
         return newTuple;
     }
@@ -219,8 +223,8 @@ public class Data {
                 score += value;
             }
             worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
-        } else {          
-            Set<Tuple> set = localBuckets.keySet(); 
+        } else {
+            Set<Tuple> set = localBuckets.keySet();
             ArrayList<Tuple> tuples = new ArrayList<Tuple>(set);
             inputTuples.put(new ByteArrayWrapper(Arrays.copyOf(input, input.length)), tuples);
         }
@@ -240,12 +244,10 @@ public class Data {
 
 }
 
-class ByteArrayWrapper
-{
+class ByteArrayWrapper {
     private final byte[] data;
 
-    public ByteArrayWrapper(byte[] data)
-    {
+    public ByteArrayWrapper(byte[] data) {
         this.data = data;
     }
 
@@ -254,20 +256,15 @@ class ByteArrayWrapper
     }
 
     @Override
-    public boolean equals(Object other)
-    {
-        if (!(other instanceof ByteArrayWrapper))
-        {
+    public boolean equals(Object other) {
+        if (!(other instanceof ByteArrayWrapper)) {
             return false;
         }
-        return Arrays.equals(data, ((ByteArrayWrapper)other).data);
+        return Arrays.equals(data, ((ByteArrayWrapper) other).data);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return Arrays.hashCode(data);
     }
 }
-
-

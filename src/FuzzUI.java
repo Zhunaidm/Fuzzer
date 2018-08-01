@@ -76,7 +76,7 @@ public class FuzzUI implements Runnable {
         if (modeValue == 0) {
         mode = "Blind Fuzzing";
         } else {
-            mode = "Worst Case Fuzing";
+            mode = "Worst Case Fuzzing";
         }    
 
         mainFrame.addWindowListener(new WindowAdapter() {
