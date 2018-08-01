@@ -8,6 +8,8 @@ public class WorstHash {
     private static final int TABLE_SIZE = 4001;
     private static entry_t[] hashtable;
     static int count = 0;
+    static int maxWords = 15;
+    static int currentWords;
     
     public static int compute_hash(String str) {
         long hash = 0;
@@ -15,7 +17,12 @@ public class WorstHash {
             hash = 31 * hash + (int)str.charAt(i);
         }
 
-        return (int)(hash % TABLE_SIZE);
+        int result = (int)(hash % TABLE_SIZE);
+        if (result < 0) {
+            result += TABLE_SIZE;
+        }
+
+        return result;
     }
     public static void add_word(String word) {                        
         int bucket = compute_hash(word);                             
@@ -36,11 +43,13 @@ public class WorstHash {
     }      
     public static void main(String args[]) throws Exception {
             hashtable = new entry_t[TABLE_SIZE];
+            currentWords = 0;
             count = 0;
             String filename = args[0];
 
             Scanner sc = new Scanner(new File(args[0]));
-            while (sc.hasNext()) {
+            while (sc.hasNext() && (currentWords < maxWords)) {
+                currentWords++;
                 add_word(sc.next());
             }
             if (count > 38)
