@@ -46,6 +46,7 @@ public class JAFL {
    // private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
     private static int runNumber = 0;
+    private static int runs = 0;
     private static boolean worstCaseMode = false;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
@@ -151,7 +152,7 @@ public class JAFL {
         if (totalPaths == 0) {
             return 0;
         }
-        return Math.round(((Data.getSize() / (double) totalPaths) * 100) * 100.0) / 100.0;
+        return Math.round(((Data.getNoBranches() / (double) totalPaths) * 100) * 100.0) / 100.0;
     }
 
     public static int getNumberPaths() {
@@ -169,7 +170,13 @@ public class JAFL {
         return crashingInputs.size();
     }
 
+    public static int getNumberRuns() {
+        return runs;
+    }
+
     public static void execProgram(byte[] base) throws IOException {
+        runs++;
+
         try {
             Method meth = cls.getMethod("main", String[].class);
             Data.resetTuples();

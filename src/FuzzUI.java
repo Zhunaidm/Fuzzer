@@ -13,6 +13,7 @@ public class FuzzUI implements Runnable {
     private static JLabel pathsLabel;
     private static JLabel queueLabel;
     private static JLabel crashesLabel;
+    private static JLabel runsLabel;
     private JPanel controlPanel;
     private static String mode;
 
@@ -57,6 +58,7 @@ public class FuzzUI implements Runnable {
             pathsLabel.setText("No. Paths: " + JAFL.getNumberPaths());
             queueLabel.setText("Queue Size: " + JAFL.getQueueSize());
             crashesLabel.setText("Crashes: " + JAFL.getNumberCrashes());
+            runsLabel.setText("Number of executions: " + JAFL.getNumberRuns());
         }
     }
 
@@ -83,7 +85,7 @@ public class FuzzUI implements Runnable {
            }        
         });
           controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(3,2));
+        controlPanel.setLayout(new GridLayout(4,2));
         controlPanel.setBackground(Color.DARK_GRAY);
         mainFrame.getContentPane().setBackground(Color.BLACK);
         mainFrame.add(headerLabel);
@@ -113,12 +115,15 @@ public class FuzzUI implements Runnable {
         queueLabel.setForeground(Color.ORANGE);
         crashesLabel = new JLabel("Crashes: ", JLabel.LEFT);
         crashesLabel.setForeground(Color.ORANGE);
+        runsLabel = new JLabel("Number of executions: ", JLabel.LEFT);
+        runsLabel.setForeground(Color.ORANGE);
         controlPanel.add(timeLabel);
         controlPanel.add(operationLabel);        
         controlPanel.add(coverageLabel);
         controlPanel.add(pathsLabel);
         controlPanel.add(queueLabel);
         controlPanel.add(crashesLabel);
+        controlPanel.add(runsLabel);
         mainFrame.setVisible(true);  
      } 
 

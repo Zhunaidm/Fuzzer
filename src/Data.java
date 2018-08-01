@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Map;
@@ -8,6 +9,7 @@ public class Data {
 
     private static Map<Tuple, String> tuples = new HashMap<Tuple, String>();
     private static Map<Tuple, bucket> buckets = new HashMap<Tuple, bucket>();
+    private static Set<String> branches = new HashSet<String>();
     private static Map<Tuple,  Integer> worstCaseBuckets = new HashMap<Tuple, Integer>();
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
@@ -22,6 +24,8 @@ public class Data {
     public static void resetAll() {
         tuples = null;
         tuples = new HashMap<Tuple, String>();
+        branches = null;
+        branches = new HashSet<String>();
         if (worstCaseMode) {
             worstCaseBuckets = null;
             worstCaseBuckets = new HashMap<Tuple, Integer>();
@@ -75,6 +79,10 @@ public class Data {
         return tuples.size();
     }
 
+    public static int getNoBranches() {
+        return branches.size();
+    }
+
     public static byte[] getCurrentInput() {
         return currentInput;
     }
@@ -101,6 +109,8 @@ public class Data {
         Tuple tuple = new Tuple(src, dest);
         if (!tuples.containsKey(tuple) && !src.equals(dest)) {
             tuples.put(tuple, "");
+            branches.add(src);
+            branches.add(dest);
             if (worstCaseMode) {
                 worstCaseBuckets.put(tuple, 1);
             } else {
