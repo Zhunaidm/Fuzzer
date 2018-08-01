@@ -187,7 +187,7 @@ public class JAFL {
             fos.close();
             meth.invoke(null, (Object) (new String[] { ".temp" }));
             if (Data.getNew()) {
-                if (worstCaseMode) {
+                if (worstCaseMode && Data.newMaxWorst(base)) {
                     saveResult(base, 2);
                 } else {
                     saveResult(base, 0);

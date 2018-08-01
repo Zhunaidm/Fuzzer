@@ -215,6 +215,22 @@ public class Data {
         return newTuple;
     }
 
+    public static boolean newMaxWorst(byte[] input) {
+        int max = 0;
+
+        for (int score : worstCaseScores.values()) {
+            if (score > max) {
+                max = score;
+            }
+        }
+
+        if (worstCaseScores.get(new ByteArrayWrapper(input))  == max) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static void addInitialList(byte[] input) {
         if (worstCaseMode) {
             ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
