@@ -38,20 +38,19 @@ public class JAFL {
     private static boolean abort = false;
     private static Class<?> cls;
     private static String className;
+    private static int noWorstInputs = 0;
     private static int paths = 0;
     private static int totalPaths = 0;
     private static String file = "";
-    //private static PriorityQueue<Input> queue;
+    // private static PriorityQueue<Input> queue;
     private static Queue<Input> queue;
-   // private static Comparator<Input> comparator = new InputComparator();
+    // private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
     private static int runNumber = 0;
     private static int runs = 0;
     private static boolean worstCaseMode = false;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
- 
-    
 
     public static void main(String[] args) throws Exception {
         if (args.length == 3) {
@@ -70,7 +69,7 @@ public class JAFL {
 
         file = args[1];
         cls = Class.forName(className);
-        //queue = new PriorityQueue<Input>(10, comparator);
+        // queue = new PriorityQueue<Input>(10, comparator);
         queue = new LinkedList<Input>();
         Path path = Paths.get(file);
         byte[] base = Files.readAllBytes(path);
@@ -94,7 +93,7 @@ public class JAFL {
         br.close();
         preTime = System.currentTimeMillis();
         while (!abort) {
-            runNumber++;            
+            runNumber++;
             Data.resetTuples();
             Input input = queue.remove();
             byte[] basic = input.getData();
@@ -122,8 +121,7 @@ public class JAFL {
             }
             currentOperation = 5;
             havoc(temp);
-            
-            
+
             if (runNumber % 5 == 0) {
                 cullQueue();
             }
@@ -189,7 +187,8 @@ public class JAFL {
             if (Data.getNew()) {
                 if (worstCaseMode && Data.newMaxWorst(base)) {
                     saveResult(base, 2);
-                } else {
+                    noWorstInputs++;
+                } else if (!worstCaseMode) {
                     saveResult(base, 0);
                 }
             }
@@ -200,7 +199,7 @@ public class JAFL {
                 saveResult(base, 1);
             }
             System.out.println("Preventing abort...");
-           // abort = true;
+            // abort = true;
         } catch (InvocationTargetException ite) {
             if (ite.getCause() instanceof SystemExitControl.ExitTrappedException) {
                 if (!crashingInputs.containsByteArray(base)) {
@@ -208,7 +207,7 @@ public class JAFL {
                     saveResult(base, 1);
                 }
                 System.out.println("Preventing abort...");
-                //abort = true;
+                // abort = true;
             }
 
         } catch (Exception e) {
@@ -221,26 +220,26 @@ public class JAFL {
         File outFile;
 
         switch (type) {
-            case 0:
-                // Save inputs with new tuples.
-                outFile = new File("output/" + className + "/" + className + "_output" + paths + ".txt");
-                outFile.mkdirs(); 
-                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                break;
-            case 1:
-                // Save inputs which crash.
-                outFile = new File("output/" + className + "/" + className + "_error" + crashingInputs.size() + ".txt");
-                outFile.mkdirs(); 
-                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                break;
-            case 2:
-                // Save Worst case inputs with higher score.
-                outFile = new File("output/" + className + "/" + className + "_worst" + paths + ".txt");
-                outFile.mkdirs(); 
-                Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                break;
-            default:
-                break;
+        case 0:
+            // Save inputs with new tuples.
+            outFile = new File("output/" + className + "/" + className + "_output" + paths + ".txt");
+            outFile.mkdirs();
+            Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            break;
+        case 1:
+            // Save inputs which crash.
+            outFile = new File("output/" + className + "/" + className + "_error" + crashingInputs.size() + ".txt");
+            outFile.mkdirs();
+            Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            break;
+        case 2:
+            // Save Worst case inputs with higher score.
+            outFile = new File("output/" + className + "/" + className + "_worst" + noWorstInputs + ".txt");
+            outFile.mkdirs();
+            Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            break;
+        default:
+            break;
         }
     }
 
@@ -258,7 +257,7 @@ public class JAFL {
         for (Tuple tuple : tuples) {
             score = 0;
             if (!evaluatedTuples.contains(tuple)) {
-                for (Input input: list) {
+                for (Input input : list) {
                     byte[] inputArr = input.getData();
                     ArrayList<Tuple> inputList = Data.getInputList(inputArr);
                     if (inputList == null && list.size() != 1) {
@@ -282,8 +281,8 @@ public class JAFL {
                             score = inputList.size();
                             winningInput = inputArr;
                             evaluated = input.getEvaluated();
-                            
-                       }
+
+                        }
                     }
                 }
                 evaluatedTuples.addAll(Data.getInputList(winningInput));
@@ -291,16 +290,16 @@ public class JAFL {
             }
         }
         if (worstCaseMode) {
-            for (Input input: list) {
-                if (!worstInputs.contains(input) && Data.getWorstCaseScore(input.getData()) > maxScore ) {
+            for (Input input : list) {
+                if (!worstInputs.contains(input) && Data.getWorstCaseScore(input.getData()) > maxScore) {
                     worstInputs.add(input);
-                    newInputs.add(new Input(input.getData(), input.getEvaluated(), Data.getWorstCaseScore(input.getData())));
+                    newInputs.add(
+                            new Input(input.getData(), input.getEvaluated(), Data.getWorstCaseScore(input.getData())));
                 }
             }
         }
         queue = new LinkedList<Input>(newInputs);
-        
-        
+
     }
 
     // Remove a byte from the byte array.
@@ -901,7 +900,7 @@ class Input {
     public String toString() {
         String out = "[";
         for (int i = 0; i < data.length; i++) {
-           out += data[i]+",";
+            out += data[i] + ",";
         }
         out += "] = " + score;
         return out;
@@ -921,6 +920,7 @@ class InputComparator implements Comparator<Input> {
         return 0;
     }
 }
+
 class Tuple {
     private String src;
     private String dest;
@@ -957,8 +957,8 @@ class Tuple {
 
 class ByteSet extends HashSet<byte[]> {
     public boolean containsByteArray(byte[] input) {
-        for(byte[] base : this ) {
-            if(Arrays.equals(base, input)) {
+        for (byte[] base : this) {
+            if (Arrays.equals(base, input)) {
                 return true;
             }
         }
