@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 
+import java.util.Properties;
+
 import java.lang.Class;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
@@ -20,9 +22,13 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Arrays;
 import java.util.Set;
+
+import za.ac.sun.cs.coastal.ConfigurationBuilder;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import java.nio.ByteBuffer;
 
@@ -49,6 +55,7 @@ public class JAFL {
     private static int runNumber = 0;
     private static int runs = 0;
     private static boolean worstCaseMode = false;
+    private static boolean concolicMode = true;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
 
@@ -63,6 +70,10 @@ public class JAFL {
         }
         if (worstCaseMode) {
             Data.setWorstCaseMode(true);
+        }
+
+        if (concolicMode) {
+            runCoastal();
         }
         className = args[0];
         (new Thread(new FuzzUI())).start();
@@ -213,6 +224,31 @@ public class JAFL {
         } catch (Exception e) {
         }
 
+    }
+
+    // Run Concolic execution trough Coastal
+    private static void runCoastal(byte[] input) {
+        // Currently hardcoded to Deadbeef example.
+        storeInputFile(input);
+        final Properties props = new Properties();
+        props.setProperty("coastal.main", "tests.strings.DB");
+        props.setProperty("coastal.targets", "tests.strings");
+        props.setProperty("coastal.triggers", "tests.strings.DB.analyse(X: String)");
+        props.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
+        final Logger log = new TestLogger();
+        final String version = "coastal-test";
+        final ReporterManager reporterManager = new ReporterManager();
+        ConfigurationBuilder cb = new ConfigurationBuilder(log, version, reporterManager);
+        assertTrue(cb.readFromProperties(props));
+        cb.setArgs(".temp");
+        new COASTAL(cb.construct()).start();
+        checkOutput(log, expectedFilename);
+    }
+
+    private static void storeInputFile(byte[] input) {
+        FileOutputStream fos = new FileOutputStream(".temp");
+        fos.write(input);
+        fos.close();
     }
 
     public static void saveResult(byte[] result, int type) throws IOException {

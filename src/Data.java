@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Arrays;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class Data {
 
@@ -14,6 +16,7 @@ public class Data {
     private static Map<Tuple, Integer> localBuckets;
     private static Map<ByteArrayWrapper, ArrayList<Tuple>> inputTuples = new HashMap<ByteArrayWrapper, ArrayList<Tuple>>();
     private static Map<ByteArrayWrapper, Integer> worstCaseScores = new HashMap<ByteArrayWrapper, Integer>();
+    private static Queue<Byte[]> coastalInputs = new LinkedList<Byte[]>();
     private static String prevBranch = "Source";
     private static byte[] currentInput = null;
     private static boolean newTuple = false;
@@ -224,7 +227,7 @@ public class Data {
             }
         }
 
-        if (worstCaseScores.get(new ByteArrayWrapper(input))  == max) {
+        if (worstCaseScores.get(new ByteArrayWrapper(input)) == max) {
             return true;
         }
 
@@ -252,6 +255,10 @@ public class Data {
 
     public static int getWorstCaseScore(byte[] input) {
         return worstCaseScores.get(new ByteArrayWrapper(input));
+    }
+
+    public static void addCoastalInput(Byte[] input) {
+        coastalInputs.add(input);
     }
 
     public enum bucket {
