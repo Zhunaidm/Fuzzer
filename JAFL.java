@@ -71,10 +71,12 @@ public class JAFL {
     private static int runNumber = 0;
     private static int runs = 0;
     private static boolean worstCaseMode = false;
-    private static boolean concolicMode = true;
+    private static boolean concolicMode = false;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
     private static Properties prop = null;
+    private static int concolicIterations = 0;
+    private static String[] initialClassNames;
 
     //For Mystery
     //examples.strings.MysteryFuzz test_mystery.txt
@@ -90,10 +92,10 @@ public class JAFL {
         } */
 
         parseProperties(args[0]);
-        className = initialClassName + "2";
+        className = initialClassName + "_instrumented";
         // Instrument Code
 
-        Instrumenter.instrument(initialClassName, className);
+        Instrumenter.instrument(initialClassNames);
         (new Thread(new FuzzUI())).start();
 
         //file = args[1];
@@ -157,7 +159,7 @@ public class JAFL {
             }            
 
             // Run Coastal
-            if (concolicMode && runNumber != 0 && runNumber % 10 == 0) {
+            if (concolicMode && runNumber != 0 && runNumber % concolicIterations == 0) {
                 // Create a temporary new queue
                 ArrayList<Input> newInputs = new ArrayList<Input>();
                 System.out.println("Startiing coastal...");
@@ -272,8 +274,23 @@ public class JAFL {
             prop.load(propFile);
 
             initialClassName = prop.getProperty("jafl.main");
-            String[] classes = prop.getProperty("jafl.classes").split(",");
+            initialClassNames = prop.getProperty("jafl.classes").split(",");
             file = prop.getProperty("jafl.test");
+            String cm = prop.getProperty("jafl.concolic", "false");
+            String pm = prop.getProperty("jafl.performance", "false");
+            concolicIterations = Integer.parseInt(prop.getProperty("jafl.concoliciterations", "100"));
+
+            if(cm.equals("true")) {
+                concolicMode = true;
+            } else {
+                concolicMode = false;
+            }
+
+            if(pm.equals("true")) {
+                worstCaseMode = true;
+            } else {
+                worstCaseMode = false;
+            }
 
             propFile.close();
 

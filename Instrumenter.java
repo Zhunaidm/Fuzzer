@@ -1,5 +1,6 @@
 
 import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -17,19 +18,25 @@ import org.objectweb.asm.commons.Remapper;
 
 public class Instrumenter {
 
-    public static void instrument(String inputClassName, String outputClassName) throws Exception {
+    public static void instrument(String[] inputClassNames) throws Exception {
         // FileInputStream is = new FileInputStream(inputClassName);
+        new File(".branches").delete();
+        for (String inputClassName : inputClassNames) {
+        inputClassName = inputClassName.replaceAll("\\s+","");
+            System.out.println(inputClassName);
         ClassReader cr = new ClassReader(inputClassName);
-        final String className = outputClassName.replace('.', '/');
+        final String className = (inputClassName + "_instrumented").replace('.', '/');
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         ClassAdapter ca = new ClassAdapter(cw, cr.getClassName());
         Remapper remapper = new Remapper() {
             @Override
             public String map(String typeName) {
-                if (typeName.equals(cr.getClassName())) {
-                    return className;
+                for (int i = 0; i < inputClassNames.length; i++) {
+                    if (typeName.equals(inputClassNames[i].replaceAll("\\s+",""))) {
+                        return (inputClassNames[i].replaceAll("\\s+","") + "_instrumented").replace('.', '/');
+                    }
                 }
-
+                
                 return super.map(typeName);
             }
 
@@ -40,11 +47,12 @@ public class Instrumenter {
         FileOutputStream fos = new FileOutputStream("" + className + ".class");
         fos.write(cw.toByteArray());
         fos.close();
-        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", false)); // Only instrumenting a single
+        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true)); // Only instrumenting a single
                                                                                      // class so append set to false.
         out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
         out.flush();
         out.close();
+        }
     }
 }
 

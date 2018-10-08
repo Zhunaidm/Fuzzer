@@ -41,7 +41,7 @@ public class DB {
     }
 
     public static void main(String[] args) throws Exception {
-        Scanner sc = new Scanner(new File(".temp"));
+        Scanner sc = new Scanner(new File(args[0]));
         String word = sc.nextLine();
         sc.close();
         int r = analyse(word);
