@@ -162,22 +162,21 @@ public class JAFL {
             if (concolicMode && runNumber != 0 && runNumber % concolicIterations == 0) {
                 // Create a temporary new queue
                 ArrayList<Input> newInputs = new ArrayList<Input>();
-                System.out.println("Startiing coastal...");
+                System.out.println("Starting coastal...");
                 for (Input qInput : queue) {
                     newInputs.add(new Input(qInput.getData(), qInput.getEvaluated(), qInput.getScore(), true));
                     if (qInput.getCoastalEvaluated()) {continue;}
 
                     byte[] fuzzInput = qInput.getData();
                     // Redirect coastal logging.
-                    // PrintStream original = System.out;
-                    /*System.setOut(new PrintStream(new OutputStream() {
+                     PrintStream original = System.out;
+                    System.setOut(new PrintStream(new OutputStream() {
                         public void write(int b) {
                             //DO NOTHING
                         }
-                    }));*/
-                    //runCoastal(fuzzInput);
+                    }));
                     runCoastal(Arrays.copyOf(fuzzInput, fuzzInput.length + 5));
-                    //System.setOut(original);
+                    System.setOut(original);
                     System.out.println("COASTAL RAN SUCCESSFULLY");
                     System.out.println("Base Input: " + new String(fuzzInput));
 
@@ -345,24 +344,8 @@ public class JAFL {
 
     // Run Concolic execution trough Coastal
     private static void runCoastal(byte[] input) throws Exception {
-        // Currently hardcoded to Deadbeef example.
         storeInputFile(input);
-        final Logger log = LogManager.getLogger("COASTAL");
-        // MysteryFuzz
-        //props.setProperty("coastal.main", "examples.strings.MysteryFuzz");
-        //props.setProperty("coastal.targets", "examples.strings");
-        //props.setProperty("coastal.triggers", "examples.strings.MysteryFuzz.preserveSomeHtmlTagsAndRemoveWhitespaces(X: String)");
-        //props.setProperty("coastal.delegates", "java.lang.String:za.ac.sun.cs.coastal.model.String");
-        //DeadBeef
-        //prop.setProperty("coastal.main", "examples.strings.DB");
-        //prop.setProperty("coastal.targets", "examples.strings");
-        //prop.setProperty("coastal.triggers", "examples.strings.DB.analyse(X: String)");
-        
-       //prop.setProperty("coastal.listeners", "za.ac.sun.cs.coastal.listener.control.StopController");
-        //prop.setProperty("coastal.strategy", "za.ac.sun.cs.coastal.strategy.JAFLStrategy");
-        //prop.setProperty("green.z3.path", "/home/zhunaid/z3/z3-4.7.1-x64-ubuntu-16.04/bin/z3");
-        //props.setProperty("green.z3.path", "/Users/visserw/Documents/tools/z3-master/bin/z3");
-        //prop.setProperty("coastal.echooutput", "false");
+        final Logger log = LogManager.getLogger("COASTAL"); 
 
         final String version = "coastal-test";
         final ReporterManager reporterManager = new ReporterManager();
