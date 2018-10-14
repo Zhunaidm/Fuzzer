@@ -159,7 +159,7 @@ public class JAFL {
             }            
 
             // Run Coastal
-            if (concolicMode && runNumber != 0 && runNumber % concolicIterations == 0) {
+            if (concolicMode && runNumber != 0 && (runNumber % concolicIterations) == 0) {
                 // Create a temporary new queue
                 ArrayList<Input> newInputs = new ArrayList<Input>();
                 System.out.println("Starting coastal...");
@@ -168,14 +168,16 @@ public class JAFL {
                     if (qInput.getCoastalEvaluated()) {continue;}
 
                     byte[] fuzzInput = qInput.getData();
+                    byte[] send = padBytes(fuzzInput, 5, true);
                     // Redirect coastal logging.
-                     PrintStream original = System.out;
+                    PrintStream original = System.out;
                     System.setOut(new PrintStream(new OutputStream() {
                         public void write(int b) {
                             //DO NOTHING
                         }
                     }));
-                    runCoastal(Arrays.copyOf(fuzzInput, fuzzInput.length + 5));
+
+                    runCoastal(send);
                     System.setOut(original);
                     System.out.println("COASTAL RAN SUCCESSFULLY");
                     System.out.println("Base Input: " + new String(fuzzInput));
@@ -186,18 +188,18 @@ public class JAFL {
 
                     for (Byte[] cInput : coastalInputs) {
                         System.out.print("Coastal output: ");
-                        byte[] word = new byte[cInput.length];
+                        byte[] word = new byte[cInput.length];                        
                         int i = 0;
 
                         for (Byte b : cInput) {
                             System.out.print(" " + b.byteValue());
                             word[i++] = b.byteValue();
                         }
-                       // word = new byte[] {60, 0, 32, 104, 82, 69, 70, 61, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0};
                         System.out.println(" Word: " + new String(word));
                         
                         System.out.println();
 
+                        word = padBytes(word, 5, true);
                         // Execute program with the Coastal input
                         System.out.println("Executing input...");
                         execProgram(word);
@@ -221,7 +223,25 @@ public class JAFL {
 
         }
 
-    }    
+    }
+    
+    public static byte[] padBytes(byte[] input, int padAmount, boolean replaceNewLine) {
+        int start = input.length;
+        byte[] output = Arrays.copyOf(input, input.length + padAmount);
+
+        if (replaceNewLine) {
+            for (int i = 0; i < output.length; i++) {
+                if (output[i] == 10) {
+                    output[i] = 0;
+                }
+            } 
+        }
+        for (int i = 0; i < padAmount; i++) {
+            output[start++] = 0;
+        }
+
+        return output;
+    }
 
     public static String getClassName() {
         return className;

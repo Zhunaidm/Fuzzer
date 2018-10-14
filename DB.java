@@ -12,6 +12,7 @@ public class DB {
                             if (word.charAt(5) == 'e') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'f') {
+                                        System.exit(0);
                                         return 1;
                                     }
                                 }
@@ -28,6 +29,7 @@ public class DB {
                             if (word.charAt(5) == 'z') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'd') {
+                                        System.exit(0);
                                         return 2;
                                     }
                                 }
