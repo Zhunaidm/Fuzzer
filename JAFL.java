@@ -168,7 +168,7 @@ public class JAFL {
                     if (qInput.getCoastalEvaluated()) {continue;}
 
                     byte[] fuzzInput = qInput.getData();
-                    byte[] send = padBytes(fuzzInput, 5, true);
+                    byte[] send = padBytes(fuzzInput, 5, true, false);
                     // Redirect coastal logging.
                     PrintStream original = System.out;
                     System.setOut(new PrintStream(new OutputStream() {
@@ -199,7 +199,7 @@ public class JAFL {
                         
                         System.out.println();
 
-                        word = padBytes(word, 5, true);
+                        word = padBytes(word, 5, true, true);
                         // Execute program with the Coastal input
                         System.out.println("Executing input...");
                         execProgram(word);
@@ -225,7 +225,8 @@ public class JAFL {
 
     }
     
-    public static byte[] padBytes(byte[] input, int padAmount, boolean replaceNewLine) {
+    public static byte[] padBytes(byte[] input, int padAmount, boolean replaceNewLine, boolean randomPad) {
+        Random rand = new Random();
         int start = input.length;
         byte[] output = Arrays.copyOf(input, input.length + padAmount);
 
@@ -237,7 +238,11 @@ public class JAFL {
             } 
         }
         for (int i = 0; i < padAmount; i++) {
-            output[start++] = 0;
+            if (randomPad) {
+                output[start++] = (byte)(32+rand.nextInt(94));
+            } else {
+                output[start++] = 0;
+            }
         }
 
         return output;
@@ -345,6 +350,7 @@ public class JAFL {
                     crashingInputs.add(Arrays.copyOf(base, base.length));
                     saveResult(base, 1);
                 }
+                System.out.println("Found: " + new String(base));
                 System.out.println("Preventing abort...");
                 // abort = true;
             }
