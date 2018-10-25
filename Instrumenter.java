@@ -1,4 +1,6 @@
+
 import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -11,24 +13,46 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.LocalVariablesSorter;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
 
 public class Instrumenter {
 
-    public static void main(final String args[]) throws Exception {
-        FileInputStream is = new FileInputStream(args[0]);
+    public static void instrument(String[] inputClassNames) throws Exception {
+        // FileInputStream is = new FileInputStream(inputClassName);
+        new File(".branches").delete();
+        for (String inputClassName : inputClassNames) {
+            inputClassName = inputClassName.replaceAll("\\s+", "");
+            System.out.println(inputClassName);
+            ClassReader cr = new ClassReader(inputClassName);
+            final String className = (inputClassName + "_instrumented").replace('.', '/');
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+            ClassAdapter ca = new ClassAdapter(cw, cr.getClassName());
+            Remapper remapper = new Remapper() {
+                @Override
+                public String map(String typeName) {
+                    for (int i = 0; i < inputClassNames.length; i++) {
+                        if (typeName.equals(inputClassNames[i].replaceAll("\\s+", ""))) {
+                            return (inputClassNames[i].replaceAll("\\s+", "") + "_instrumented").replace('.', '/');
+                        }
+                    }
 
-        ClassReader cr = new ClassReader(is);
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        ClassAdapter ca = new ClassAdapter(cw, cr.getClassName());
-        cr.accept(ca, ClassReader.EXPAND_FRAMES);
+                    return super.map(typeName);
+                }
 
-        FileOutputStream fos = new FileOutputStream(args[1]);
-        fos.write(cw.toByteArray());
-        fos.close();
-        BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true));
-        out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
-        out.flush();
-        out.close();
+            };
+
+            ClassRemapper adapter = new ClassRemapper(ca, remapper);
+            cr.accept(adapter, ClassReader.EXPAND_FRAMES);
+            FileOutputStream fos = new FileOutputStream("" + className + ".class");
+            fos.write(cw.toByteArray());
+            fos.close();
+            BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true)); // Only instrumenting a single
+                                                                                        // class so append set to false.
+            out.write(cr.getClassName() + ": " + Data.getCounter() + "\n");
+            out.flush();
+            out.close();
+        }
     }
 }
 
@@ -59,9 +83,10 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
     @Override
     public void visitJumpInsn(int opcode, Label label) {
         int branchNo = Data.getNextBranchNo();
-
-        mv.visitJumpInsn(opcode, label);
         Data.incCounter();
+
+        // Do the call
+        mv.visitJumpInsn(opcode, label);
         // If the tuple of branches is not in the map add it
         mv.visitMethodInsn(INVOKESTATIC, "Data", "getPrevious", "()Ljava/lang/String;", false);
         mv.visitLdcInsn(className + "_" + branchNo);
@@ -69,8 +94,6 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
         // Set the previous branch to this branch
         mv.visitLdcInsn(className + "_" + branchNo);
         mv.visitMethodInsn(INVOKESTATIC, "Data", "setPrevious", "(Ljava/lang/String;)V", false);
-
-        // Do the call
 
     }
 }

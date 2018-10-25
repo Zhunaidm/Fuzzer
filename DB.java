@@ -1,25 +1,9 @@
 import java.io.*;
 import java.util.*;
 
-public class DB_test
-{
-    public static void main(String[] args) throws Exception {
-       /* if (args.length != 1) {
-            System.out.println("Please provide filename as argument.");
-            System.exit(0);
-        }*/
+public class DB {
 
-        Scanner sc = new Scanner(new File(args[0]));
-        String word = sc.next();
-        sc.close();
-
-        
-
-       /* if (word.length() != 8) {
-            System.out.println("File should only contain a single 8 letter word.");
-            System.exit(0);
-        }*/
-
+    public static int analyse(String word) {
         if (word.charAt(0) == 'd') {
             if (word.charAt(1) == 'e') {
                 if (word.charAt(2) == 'a') {
@@ -28,11 +12,8 @@ public class DB_test
                             if (word.charAt(5) == 'e') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'f') {
-                                        System.out.println("Aborting ...");
-                                        System.out.println("Found " + word);
-                                        
                                         System.exit(0);
-                                        System.out.println("This code shouldn't be reached.");
+                                        return 1;
                                     }
                                 }
                             }
@@ -48,11 +29,8 @@ public class DB_test
                             if (word.charAt(5) == 'z') {
                                 if (word.charAt(6) == 'e') {
                                     if (word.charAt(7) == 'd') {
-                                        System.out.println("Aborting ...");
-                                        System.out.println("Found " + word);
-                                        
                                         System.exit(0);
-                                        System.out.println("This code shouldn't be reached.");
+                                        return 2;
                                     }
                                 }
                             }
@@ -61,7 +39,13 @@ public class DB_test
                 }
             }
         }
+        return 0;
+    }
 
-
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(new File(args[0]));
+        String word = sc.nextLine();
+        sc.close();
+        int r = analyse(word);
     }
 }
