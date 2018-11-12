@@ -1,3 +1,4 @@
+package za.ac.sun.cs.core;
 
 import java.io.FileInputStream;
 import java.io.File;
@@ -19,7 +20,6 @@ import org.objectweb.asm.commons.Remapper;
 public class Instrumenter {
 
     public static void instrument(String[] inputClassNames) throws Exception {
-        // FileInputStream is = new FileInputStream(inputClassName);
         new File(".branches").delete();
         for (String inputClassName : inputClassNames) {
             inputClassName = inputClassName.replaceAll("\\s+", "");
@@ -32,7 +32,8 @@ public class Instrumenter {
                 @Override
                 public String map(String typeName) {
                     for (int i = 0; i < inputClassNames.length; i++) {
-                        if (typeName.equals(inputClassNames[i].replaceAll("\\s+", ""))) {
+                        if (typeName.replaceAll("/", ".").equals(inputClassNames[i].replaceAll("\\s+", ""))) {
+
                             return (inputClassNames[i].replaceAll("\\s+", "") + "_instrumented").replace('.', '/');
                         }
                     }
@@ -44,7 +45,7 @@ public class Instrumenter {
 
             ClassRemapper adapter = new ClassRemapper(ca, remapper);
             cr.accept(adapter, ClassReader.EXPAND_FRAMES);
-            FileOutputStream fos = new FileOutputStream("" + className + ".class");
+            FileOutputStream fos = new FileOutputStream("build/classes/java/main/" + className + ".class");
             fos.write(cw.toByteArray());
             fos.close();
             BufferedWriter out = new BufferedWriter(new FileWriter(".branches", true)); // Only instrumenting a single
@@ -88,12 +89,13 @@ class MethodAdapter extends LocalVariablesSorter implements Opcodes {
         // Do the call
         mv.visitJumpInsn(opcode, label);
         // If the tuple of branches is not in the map add it
-        mv.visitMethodInsn(INVOKESTATIC, "Data", "getPrevious", "()Ljava/lang/String;", false);
+        mv.visitMethodInsn(INVOKESTATIC, "za/ac/sun/cs/core/Data", "getPrevious", "()Ljava/lang/String;", false);
         mv.visitLdcInsn(className + "_" + branchNo);
-        mv.visitMethodInsn(INVOKESTATIC, "Data", "addTuple", "(Ljava/lang/String;Ljava/lang/String;)V", false);
+        mv.visitMethodInsn(INVOKESTATIC, "za/ac/sun/cs/core/Data", "addTuple",
+                "(Ljava/lang/String;Ljava/lang/String;)V", false);
         // Set the previous branch to this branch
         mv.visitLdcInsn(className + "_" + branchNo);
-        mv.visitMethodInsn(INVOKESTATIC, "Data", "setPrevious", "(Ljava/lang/String;)V", false);
+        mv.visitMethodInsn(INVOKESTATIC, "za/ac/sun/cs/core/Data", "setPrevious", "(Ljava/lang/String;)V", false);
 
     }
 }

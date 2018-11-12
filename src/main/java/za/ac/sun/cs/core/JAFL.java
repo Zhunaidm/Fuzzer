@@ -1,3 +1,4 @@
+package za.ac.sun.cs.core;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -78,18 +79,15 @@ public class JAFL {
     private static int concolicIterations = 0;
     private static String[] initialClassNames;
 
-    //For Mystery
-    //examples.strings.MysteryFuzz test_mystery.txt
-    //examples.strings.DB test.txt
+    // For Mystery
+    // examples.strings.MysteryFuzz test_mystery.txt
+    // examples.strings.DB test.txt
     public static void main(String[] args) throws Exception {
-        /* if (args.length == 3) {
-            System.out.println(args[2]);
-            if (args[2].equals("-b")) {
-                worstCaseMode = false;
-            } else if (args[2].equals("-w")) {
-                worstCaseMode = true;
-            }
-        } */
+        /*
+         * if (args.length == 3) { System.out.println(args[2]); if
+         * (args[2].equals("-b")) { worstCaseMode = false; } else if
+         * (args[2].equals("-w")) { worstCaseMode = true; } }
+         */
 
         parseProperties(args[0]);
         className = initialClassName + "_instrumented";
@@ -98,7 +96,7 @@ public class JAFL {
         Instrumenter.instrument(initialClassNames);
         (new Thread(new FuzzUI())).start();
 
-        //file = args[1];
+        // file = args[1];
         cls = Class.forName(className);
         // queue = new PriorityQueue<Input>(10, comparator);
         queue = new LinkedList<Input>();
@@ -156,7 +154,7 @@ public class JAFL {
 
             if (runNumber % 5 == 0) {
                 cullQueue();
-            }            
+            }
 
             // Run Coastal
             if (concolicMode && runNumber != 0 && (runNumber % concolicIterations) == 0) {
@@ -165,7 +163,9 @@ public class JAFL {
                 System.out.println("Starting coastal...");
                 for (Input qInput : queue) {
                     newInputs.add(new Input(qInput.getData(), qInput.getEvaluated(), qInput.getScore(), true));
-                    if (qInput.getCoastalEvaluated()) {continue;}
+                    if (qInput.getCoastalEvaluated()) {
+                        continue;
+                    }
 
                     byte[] fuzzInput = qInput.getData();
                     byte[] send = padBytes(fuzzInput, 5, true, false);
@@ -173,7 +173,7 @@ public class JAFL {
                     PrintStream original = System.out;
                     System.setOut(new PrintStream(new OutputStream() {
                         public void write(int b) {
-                            //DO NOTHING
+                            // DO NOTHING
                         }
                     }));
 
@@ -188,7 +188,7 @@ public class JAFL {
 
                     for (Byte[] cInput : coastalInputs) {
                         System.out.print("Coastal output: ");
-                        byte[] word = new byte[cInput.length];                        
+                        byte[] word = new byte[cInput.length];
                         int i = 0;
 
                         for (Byte b : cInput) {
@@ -196,7 +196,7 @@ public class JAFL {
                             word[i++] = b.byteValue();
                         }
                         System.out.println(" Word: " + new String(word));
-                        
+
                         System.out.println();
 
                         word = padBytes(word, 5, true, true);
@@ -216,7 +216,7 @@ public class JAFL {
                     Data.clearCoastalInputs();
 
                 }
-            
+
                 queue = new LinkedList<Input>(newInputs);
 
             }
@@ -224,7 +224,7 @@ public class JAFL {
         }
 
     }
-    
+
     public static byte[] padBytes(byte[] input, int padAmount, boolean replaceNewLine, boolean randomPad) {
         Random rand = new Random();
         int start = input.length;
@@ -235,11 +235,11 @@ public class JAFL {
                 if (output[i] == 10) {
                     output[i] = 0;
                 }
-            } 
+            }
         }
         for (int i = 0; i < padAmount; i++) {
             if (randomPad) {
-                output[start++] = (byte)(32+rand.nextInt(94));
+                output[start++] = (byte) (32 + rand.nextInt(94));
             } else {
                 output[start++] = 0;
             }
@@ -304,20 +304,19 @@ public class JAFL {
             String pm = prop.getProperty("jafl.performance", "false");
             concolicIterations = Integer.parseInt(prop.getProperty("jafl.concoliciterations", "100"));
 
-            if(cm.equals("true")) {
+            if (cm.equals("true")) {
                 concolicMode = true;
             } else {
                 concolicMode = false;
             }
 
-            if(pm.equals("true")) {
+            if (pm.equals("true")) {
                 worstCaseMode = true;
             } else {
                 worstCaseMode = false;
             }
 
             propFile.close();
-
 
         } catch (Exception e) {
             System.out.println("Could not find specified properties file.");
@@ -355,7 +354,8 @@ public class JAFL {
                 // abort = true;
             }
 
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
 
         if (Data.getNew()) {
             if (worstCaseMode && Data.newMaxWorst(base)) {
@@ -371,7 +371,7 @@ public class JAFL {
     // Run Concolic execution trough Coastal
     private static void runCoastal(byte[] input) throws Exception {
         storeInputFile(input);
-        final Logger log = LogManager.getLogger("COASTAL"); 
+        final Logger log = LogManager.getLogger("COASTAL");
 
         final String version = "coastal-test";
         final ReporterManager reporterManager = new ReporterManager();
@@ -469,8 +469,8 @@ public class JAFL {
             for (Input input : list) {
                 if (!worstInputs.contains(input) && Data.getWorstCaseScore(input.getData()) > maxScore) {
                     worstInputs.add(input);
-                    newInputs.add(
-                            new Input(input.getData(), input.getEvaluated(), Data.getWorstCaseScore(input.getData()), input.getCoastalEvaluated()));
+                    newInputs.add(new Input(input.getData(), input.getEvaluated(),
+                            Data.getWorstCaseScore(input.getData()), input.getCoastalEvaluated()));
                 }
             }
         }
@@ -478,284 +478,190 @@ public class JAFL {
 
     }
 
-    // Remove a byte from the byte array.
-    public static byte[] removeByte(byte[] base, int index) {
-        int count = 0;
-        byte[] newBase = new byte[base.length - 1];
-        for (int i = 0; i < base.length; i++) {
-            if (i == index) {
-                continue;
-            }
-            newBase[count++] = base[i];
-        }
-
-        return newBase;
-    }
-
-    // Add a byte from the byte array.
-    public static byte[] addByte(byte[] base, byte temp, int index) throws IOException {
-        int count = 0;
-        byte[] newBase = new byte[base.length + 1];
-        for (int i = 0; i < newBase.length; i++) {
-            if (i == index) {
-                newBase[i] = temp;
-                continue;
-            }
-            newBase[i] = base[count++];
-        }
-
-        return newBase;
-    }
-
-    // Replace a byte from the byte array.
-    public static byte[] replaceByte(byte[] base, byte temp, int index) throws IOException {
-        base[index] = temp;
-        return base;
-    }
-
     public static void flipBits(byte[] base) throws Exception {
-        // System.out.println("Single bit flip...");
+        byte[] tempBase;
         // 1 Walking bit.
         for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
-            }
-            execProgram(base);
+
+            tempBase = Mutations.oneWalkingBit(base, i);
+
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
-            }
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
             }
         }
         // 2 Walking bits.
-        // System.out.println("2 bit flips...");
         for (int i = 0; i < 7; i++) {
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
-                base[j] = (byte) (base[j] ^ (1 << (i + 1)));
-            }
-            execProgram(base);
+            tempBase = Mutations.twoWalkingBits(base, i);
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
             }
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
-                base[j] = (byte) (base[j] ^ (1 << (i + 1)));
-            }
+
         }
         // 4 Walking bits.
-        // System.out.println("4 bit flips...");
         for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
-                base[j] = (byte) (base[j] ^ (1 << (i + 1)));
-                base[j] = (byte) (base[j] ^ (1 << (i + 2)));
-                base[j] = (byte) (base[j] ^ (1 << (i + 3)));
-            }
-            execProgram(base);
+            tempBase = Mutations.fourWalkingBits(base, i);
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
-            }
-            for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] ^ (1 << i));
-                base[j] = (byte) (base[j] ^ (1 << (i + 1)));
-                base[j] = (byte) (base[j] ^ (1 << (i + 2)));
-                base[j] = (byte) (base[j] ^ (1 << (i + 3)));
             }
         }
 
     }
 
     public static void flipBytes(byte[] base) throws Exception {
+        byte[] tempBase;
         // Walking byte.
-        // System.out.println("Single byte flip...");
         for (int j = 0; j < base.length; j++) {
-            base[j] = (byte) (base[j] ^ 0xFF);
-            execProgram(base);
+            tempBase = Mutations.oneWalkingByte(base, j);
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
             }
-            base[j] = (byte) (base[j] ^ 0xFF);
 
         }
         // 2 Walking bytes.
-        // System.out.println("2 byte flips...");
         if (base.length < 2) {
             return;
         }
         for (int j = 0; j < base.length - 1; j++) {
-            base[j] = (byte) (base[j] ^ 0xFF);
-            base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
-            execProgram(base);
+            tempBase = Mutations.twoWalkingBytes(base, j);
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
             }
-            base[j] = (byte) (base[j] ^ 0xFF);
-            base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
-
         }
 
         // 4 Walking bytes.
-        // System.out.println("4 byte flips...");
         if (base.length < 4) {
             return;
         }
 
         for (int j = 0; j < base.length - 3; j++) {
-            base[j] = (byte) (base[j] ^ 0xFF);
-            base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
-            base[j + 2] = (byte) (base[j + 2] ^ 0xFF);
-            base[j + 3] = (byte) (base[j + 3] ^ 0xFF);
-            execProgram(base);
+            tempBase = Mutations.fourWalkingBytes(base, j);
+            execProgram(tempBase);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
-                queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
                 paths++;
             }
-            base[j] = (byte) (base[j] ^ 0xFF);
-            base[j + 1] = (byte) (base[j + 1] ^ 0xFF);
-            base[j + 2] = (byte) (base[j + 2] ^ 0xFF);
-            base[j + 3] = (byte) (base[j + 3] ^ 0xFF);
-
         }
 
     }
 
     public static void arithInc(byte[] base) throws Exception {
+        byte[] tempBase;
 
         // 1 Byte increment
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] + i);
-
-                execProgram(base);
+                tempBase = Mutations.incrementByte(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] - i);
             }
         }
         // 2 Byte increment
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 1; j++) {
-                base[j] = (byte) (base[j] + i);
-                base[j + 1] = (byte) (base[j + 1] + i);
-
-                execProgram(base);
+                tempBase = Mutations.incrementTwoBytes(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] - i);
-                base[j + 1] = (byte) (base[j + 1] - i);
             }
         }
         // 4 Byte increment
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 3; j++) {
-                base[j] = (byte) (base[j] + i);
-                base[j + 1] = (byte) (base[j + 1] + i);
-                base[j + 2] = (byte) (base[j + 2] + i);
-                base[j + 3] = (byte) (base[j + 3] + i);
-
-                execProgram(base);
+                tempBase = Mutations.incrementFourBytes(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] - i);
-                base[j + 1] = (byte) (base[j + 1] - i);
-                base[j + 2] = (byte) (base[j + 2] - i);
-                base[j + 3] = (byte) (base[j + 3] - i);
             }
         }
 
     }
 
     public static void arithDec(byte[] base) throws Exception {
+        byte[] tempBase;
+
         // 1 Byte decrement
 
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length; j++) {
-                base[j] = (byte) (base[j] - i);
-                execProgram(base);
+                tempBase = Mutations.decrementByte(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] + i);
             }
         }
         // 2 Byte decrement
 
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 1; j++) {
-                base[j] = (byte) (base[j] - i);
-                base[j + 1] = (byte) (base[j + 1] - i);
-
-                execProgram(base);
+                tempBase = Mutations.decrementTwoBytes(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] + i);
-                base[j + 1] = (byte) (base[j + 1] + i);
+
             }
         }
         // 4 Byte decrement
 
         for (int i = 1; i <= ARITH_MAX; i++) {
             for (int j = 0; j < base.length - 3; j++) {
-                base[j] = (byte) (base[j] - i);
-                base[j + 1] = (byte) (base[j + 1] - i);
-                base[j + 2] = (byte) (base[j + 2] - i);
-                base[j + 3] = (byte) (base[j + 3] - i);
-
-                execProgram(base);
+                tempBase = Mutations.decrementFourBytes(base, j, i);
+                execProgram(tempBase);
                 if (Data.getNew()) {
                     int score = Data.getLocalBucketSize();
-                    queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
+                    queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
                     paths++;
                 }
-                base[j] = (byte) (base[j] + i);
-                base[j + 1] = (byte) (base[j + 1] + i);
-                base[j + 2] = (byte) (base[j + 2] + i);
-                base[j + 3] = (byte) (base[j + 3] + i);
             }
         }
 
     }
 
     public static void replaceInteresting(byte[] base) throws IOException {
+
         // Setting 1 byte integers
         for (int i = 0; i < interesting_8.length; i++) {
             for (int j = 0; j < base.length; j++) {
@@ -867,6 +773,8 @@ public class JAFL {
                 case 0:
                     // Flip a random bit somewhere.
                     byteNum = rand.nextInt(base.length);
+                    tmp = rand.nextInt(8);
+                    base = Mutations.flipBit(base, byteNum, tmp);
                     base[byteNum] = (byte) (base[byteNum] ^ (1 << i));
                     break;
                 case 1:
@@ -911,7 +819,7 @@ public class JAFL {
                 case 4:
                     // Randomly subtract from a byte.
                     byteNum = rand.nextInt(base.length);
-                    base[byteNum] = (byte) (base[byteNum] - (rand.nextInt(ARITH_MAX) + 1));
+                    base = Mutations.decrementByte(base, byteNum, (rand.nextInt(ARITH_MAX) + 1));
                     break;
                 case 5:
                     // Randomly subtract from two bytes.
@@ -920,8 +828,8 @@ public class JAFL {
                     }
                     byteNum = rand.nextInt(base.length - 1);
                     tmp = rand.nextInt(ARITH_MAX) + 1;
-                    base[byteNum] = (byte) (base[byteNum] - tmp);
-                    base[byteNum + 1] = (byte) (base[byteNum + 1] - tmp);
+                    base = Mutations.decrementByte(base, byteNum, tmp);
+                    base = Mutations.decrementByte(base, byteNum + 1, tmp);
                     break;
                 case 6:
                     // Randomly subtract from four bytes.
@@ -930,15 +838,15 @@ public class JAFL {
                     }
                     byteNum = rand.nextInt(base.length - 3);
                     tmp = rand.nextInt(ARITH_MAX) + 1;
-                    base[byteNum] = (byte) (base[byteNum] - tmp);
-                    base[byteNum + 1] = (byte) (base[byteNum + 1] - tmp);
-                    base[byteNum + 2] = (byte) (base[byteNum + 2] - tmp);
-                    base[byteNum + 2] = (byte) (base[byteNum + 3] - tmp);
+                    base = Mutations.decrementByte(base, byteNum, tmp);
+                    base = Mutations.decrementByte(base, byteNum + 1, tmp);
+                    base = Mutations.decrementByte(base, byteNum + 2, tmp);
+                    base = Mutations.decrementByte(base, byteNum + 3, tmp);
                     break;
                 case 7:
                     // Randomly add to byte.
                     byteNum = rand.nextInt(base.length);
-                    base[byteNum] = (byte) (base[byteNum] - (rand.nextInt(ARITH_MAX) + 1));
+                    base = Mutations.incrementByte(base, byteNum, (rand.nextInt(ARITH_MAX) + 1));
                     break;
                 case 8:
                     // Randomly add to two bytes.
@@ -947,8 +855,8 @@ public class JAFL {
                     }
                     byteNum = rand.nextInt(base.length - 1);
                     tmp = rand.nextInt(ARITH_MAX) + 1;
-                    base[byteNum] = (byte) (base[byteNum] + tmp);
-                    base[byteNum + 1] = (byte) (base[byteNum + 1] + tmp);
+                    base = Mutations.incrementByte(base, byteNum, tmp);
+                    base = Mutations.incrementByte(base, byteNum + 1, tmp);
                     break;
                 case 9:
                     // Randomly add to four bytes.
@@ -957,10 +865,10 @@ public class JAFL {
                     }
                     byteNum = rand.nextInt(base.length - 3);
                     tmp = rand.nextInt(ARITH_MAX) + 1;
-                    base[byteNum] = (byte) (base[byteNum] - tmp);
-                    base[byteNum + 1] = (byte) (base[byteNum + 1] + tmp);
-                    base[byteNum + 2] = (byte) (base[byteNum + 2] + tmp);
-                    base[byteNum + 2] = (byte) (base[byteNum + 3] + tmp);
+                    base = Mutations.incrementByte(base, byteNum, tmp);
+                    base = Mutations.incrementByte(base, byteNum + 1, tmp);
+                    base = Mutations.incrementByte(base, byteNum + 2, tmp);
+                    base = Mutations.incrementByte(base, byteNum + 3, tmp);
                     break;
                 case 10:
                     // Set a random byte to a random value.
@@ -975,26 +883,14 @@ public class JAFL {
                         continue;
                     }
                     byteNum = rand.nextInt(base.length);
-                    base = removeByte(base, byteNum);
+                    base = Mutations.removeByte(base, byteNum);
                     break;
                 case 13:
-                		base = CloningOrInserting(base);
-                    // Clone or insert bytes.
-                		/*
-                    if (rand.nextInt(4) == 0) {
-                        // Insert constant bytes.
-                    	   System.out.println("Inserting");
-                        byteNum = rand.nextInt(base.length);
-                        base = addByte(base, (byte) (rand.nextInt(255) + 1), rand.nextInt(base.length + 1));
-                        
-                    } else {
-                        // Clone Bytes.
-                    	   System.out.println("Cloning");
-                        byteNum = rand.nextInt(base.length);
-                        base = addByte(base, base[byteNum], rand.nextInt(base.length + 1));
-
-                    }
-                    */
+                    boolean clone = (rand.nextInt(4) > 0);
+                    int blockSize = rand.nextInt(base.length); // how much you want to clone or insert
+                    int blockStart = rand.nextInt(base.length - blockSize + 1); // where do you start from
+                    int newPos = rand.nextInt(base.length); // where are we putting the new stuff
+                    base = Mutations.CloningOrInserting(base, clone, blockStart, newPos, blockSize);
                     break;
                 case 14:
                     // Overwrite bytes
@@ -1002,7 +898,7 @@ public class JAFL {
                     if (rand.nextInt(4) == 0) {
                         // Fixed bytes.
                         byteNum = rand.nextInt(base.length);
-                        base = replaceByte(base, (byte) (rand.nextInt(255) + 1), byteNum);
+                        base = Mutations.replaceByte(base, (byte) (rand.nextInt(255) + 1), byteNum);
                     } else {
                         // Random chunk.
                         byteNum = rand.nextInt(base.length);
@@ -1010,7 +906,7 @@ public class JAFL {
                         if (byteNum == tmp) {
                             continue;
                         }
-                        base = replaceByte(base, base[tmp], byteNum);
+                        base = Mutations.replaceByte(base, base[tmp], byteNum);
 
                     }
                     break;
@@ -1030,31 +926,6 @@ public class JAFL {
             System.arraycopy(backup, 0, base, 0, backup.length);
         }
     }
-    
-	private static byte[] CloningOrInserting(byte[] base) {
-		// if things get too long lets stop this bus! This is super bad and needs to be configured
-		if (base.length > 20) return base;
-		//first figure out which one you want to do
-		Random rand = new Random();
-		boolean clone = (rand.nextInt(4)>0);
-		int blockSize = rand.nextInt(base.length); // how much you want to clone or insert
-		int blockStart = 0; // where do you start from
-		if (clone) {
-			blockStart = rand.nextInt(base.length-blockSize+1);
-		}
-		int newPos = rand.nextInt(base.length); // where are we putting the new stuff
-		byte[] newBase = new byte[base.length + blockSize];
-		System.arraycopy(base, 0, newBase, 0, newPos);
-		if (clone) {
-			System.arraycopy(base, blockStart, newBase, newPos, blockSize);
-		} else {
-			byte data = (byte)(rand.nextInt(256) -128);
-			Arrays.fill(newBase,newPos,newPos+blockSize,data);
-		}
-		System.arraycopy(base, newPos, newBase, newPos+blockSize, base.length-newPos);
-		//System.out.println("Cloning? "  + clone + (new String(newBase)));
-		return newBase;
-	}
 
 }
 

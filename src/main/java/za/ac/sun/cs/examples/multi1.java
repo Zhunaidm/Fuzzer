@@ -1,3 +1,5 @@
+package za.ac.sun.cs.examples;
+
 import java.io.File;
 import java.util.Scanner;
 
