@@ -1,3 +1,5 @@
+package za.ac.sun.cs.examples;
+
 public class multi2 {
 
     public static int analyse(String word) {
@@ -5,12 +7,12 @@ public class multi2 {
             if (word.charAt(1) == 'e') {
                 if (word.charAt(2) == 's') {
                     if (word.charAt(3) == 't') {
-                            return 1;
-                        }
+                        return 1;
                     }
                 }
             }
+        }
 
-            return 0;
+        return 0;
     }
 }
