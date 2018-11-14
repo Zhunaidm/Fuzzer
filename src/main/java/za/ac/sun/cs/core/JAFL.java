@@ -312,8 +312,10 @@ public class JAFL {
 
             if (pm.equals("true")) {
                 worstCaseMode = true;
+                Data.setWorstCaseMode(true);
             } else {
                 worstCaseMode = false;
+                Data.setWorstCaseMode(false);
             }
 
             propFile.close();
