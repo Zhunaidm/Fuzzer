@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.Collections;
 
 import za.ac.sun.cs.coastal.ConfigurationBuilder;
 import za.ac.sun.cs.coastal.reporting.ReporterManager;
@@ -65,29 +66,25 @@ public class JAFL {
     private static int paths = 0;
     private static int totalPaths = 0;
     private static String file = "";
-    // private static PriorityQueue<Input> queue;
     private static Queue<Input> queue;
-    // private static Comparator<Input> comparator = new InputComparator();
     private static double preTime;
     private static int runNumber = 0;
     private static int runs = 0;
+    private static boolean debug = false;
+    private static boolean coastalDebug = false;
     private static boolean worstCaseMode = false;
     private static boolean concolicMode = false;
+    private static boolean fixedInput = false;
+    private static boolean padInputs = false;
     private static int currentOperation = 0;
     private static ByteSet crashingInputs = new ByteSet();
     private static Properties prop = null;
     private static int concolicIterations = 0;
     private static String[] initialClassNames;
 
-    // For Mystery
-    // examples.strings.MysteryFuzz test_mystery.txt
-    // examples.strings.DB test.txt
+
     public static void main(String[] args) throws Exception {
-        /*
-         * if (args.length == 3) { System.out.println(args[2]); if
-         * (args[2].equals("-b")) { worstCaseMode = false; } else if
-         * (args[2].equals("-w")) { worstCaseMode = true; } }
-         */
+
 
         parseProperties(args[0]);
         className = initialClassName + "_instrumented";
@@ -96,9 +93,7 @@ public class JAFL {
         Instrumenter.instrument(initialClassNames);
         (new Thread(new FuzzUI())).start();
 
-        // file = args[1];
         cls = Class.forName(className);
-        // queue = new PriorityQueue<Input>(10, comparator);
         queue = new LinkedList<Input>();
         Path path = Paths.get(file);
         byte[] base = Files.readAllBytes(path);
@@ -127,16 +122,17 @@ public class JAFL {
             Data.resetTuples();
             Input input = queue.remove();
             byte[] basic = input.getData();
-            System.out.println("Base: " + new String(basic));
-            System.out.println("ASCII: " + input);
+            if (debug) {
+                System.out.println("Base: " + new String(basic));
+                System.out.println("ASCII: " + input);
+            }
             queue.add(new Input(basic, true, input.getScore(), input.getCoastalEvaluated()));
+
             byte[] temp = Arrays.copyOf(basic, basic.length);
             if (!input.getEvaluated()) {
-                // System.out.println("Performing Bit Flips...\n");
                 currentOperation = 0;
                 flipBits(temp);
 
-                // System.out.println("Performing Byte Flips...\n");
                 currentOperation = 1;
                 flipBytes(temp);
 
@@ -160,7 +156,8 @@ public class JAFL {
             if (concolicMode && runNumber != 0 && (runNumber % concolicIterations) == 0) {
                 // Create a temporary new queue
                 ArrayList<Input> newInputs = new ArrayList<Input>();
-                System.out.println("Starting coastal...");
+                if (coastalDebug)
+                    System.out.println("Starting coastal...");
                 for (Input qInput : queue) {
                     newInputs.add(new Input(qInput.getData(), qInput.getEvaluated(), qInput.getScore(), true));
                     if (qInput.getCoastalEvaluated()) {
@@ -179,40 +176,46 @@ public class JAFL {
 
                     runCoastal(send);
                     System.setOut(original);
-                    System.out.println("COASTAL RAN SUCCESSFULLY");
-                    System.out.println("Base Input: " + new String(fuzzInput));
+                    if (coastalDebug) {
+                        System.out.println("COASTAL RAN SUCCESSFULLY");
+                        System.out.println("Base Input: " + new String(fuzzInput));
 
-                    System.out.println();
-                    System.out.println("--------------------------------------------");
+                        System.out.println();
+                        System.out.println("--------------------------------------------");
+                    }
                     ArrayList<Byte[]> coastalInputs = JAFLStrategy.getCoastalInputs();
 
                     for (Byte[] cInput : coastalInputs) {
-                        System.out.print("Coastal output: ");
+                        if (coastalDebug)  
+                            System.out.print("Coastal output: ");
                         byte[] word = new byte[cInput.length];
                         int i = 0;
 
                         for (Byte b : cInput) {
-                            System.out.print(" " + b.byteValue());
+                            if (coastalDebug)
+                                System.out.print(" " + b.byteValue());
                             word[i++] = b.byteValue();
                         }
-                        System.out.println(" Word: " + new String(word));
-
-                        System.out.println();
+                        if (coastalDebug) {
+                            System.out.println(" Word: " + new String(word));
+                            System.out.println();
+                        }
 
                         word = padBytes(word, 5, true, true);
                         // Execute program with the Coastal input
+                        if (coastalDebug) 
                         System.out.println("Executing input...");
-                        execProgram(word);
-                        System.out.println("Is New? :" + Data.getNew());
+                            execProgram(word);
+                        if (coastalDebug) 
+                            System.out.println("Is New? :" + Data.getNew());
                         if (Data.getNew()) {
-                            System.out.println("IT'S NEW");
                             int inputScore = Data.getLocalBucketSize();
                             newInputs.add(new Input(Arrays.copyOf(word, word.length), false, inputScore, false));
                             Data.resetTuples();
-                            paths++;
                         }
                     }
-                    System.out.println("--------------------------------------------");
+                    if (coastalDebug) 
+                        System.out.println("--------------------------------------------");
                     Data.clearCoastalInputs();
 
                 }
@@ -272,7 +275,7 @@ public class JAFL {
     }
 
     public static int getNumberPaths() {
-        return paths;
+        return Data.getPaths();
     }
 
     public static int getQueueSize() {
@@ -300,23 +303,19 @@ public class JAFL {
             initialClassName = prop.getProperty("jafl.main");
             initialClassNames = prop.getProperty("jafl.classes").split(",");
             file = prop.getProperty("jafl.test");
-            String cm = prop.getProperty("jafl.concolic", "false");
-            String pm = prop.getProperty("jafl.performance", "false");
+            concolicMode = Boolean.parseBoolean(prop.getProperty("jafl.concolic", "false"));
+            worstCaseMode =  Boolean.parseBoolean(prop.getProperty("jafl.performance", "false"));
+            fixedInput = Boolean.parseBoolean(prop.getProperty("jafl.fixedlength", "false"));
+            debug = Boolean.parseBoolean(prop.getProperty("jafl.debug", "false"));
+            coastalDebug =  Boolean.parseBoolean(prop.getProperty("jafl.coastaldebug", "false"));
+
             concolicIterations = Integer.parseInt(prop.getProperty("jafl.concoliciterations", "100"));
 
-            if (cm.equals("true")) {
-                concolicMode = true;
-            } else {
-                concolicMode = false;
+            if (worstCaseMode) {
+                Data.setWorstCaseMode(true);
             }
 
-            if (pm.equals("true")) {
-                worstCaseMode = true;
-                Data.setWorstCaseMode(true);
-            } else {
-                worstCaseMode = false;
-                Data.setWorstCaseMode(false);
-            }
+      
 
             propFile.close();
 
@@ -397,7 +396,7 @@ public class JAFL {
         switch (type) {
         case 0:
             // Save inputs with new tuples.
-            outFile = new File("output/" + className + "/" + className + "_output" + paths + ".txt");
+            outFile = new File("output/" + className + "/" + className + "_output" + Data.getPaths() + ".txt");
             outFile.mkdirs();
             Files.copy(inFile.toPath(), outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             break;
@@ -464,12 +463,21 @@ public class JAFL {
                     }
                 }
                 evaluatedTuples.addAll(Data.getInputList(winningInput));
+                
                 newInputs.add(new Input(winningInput, evaluated, score, coastalEvaluated));
             }
         }
         if (worstCaseMode) {
+            Collections.sort(list, new Comparator<Input>() {
+                @Override
+                public int compare(Input lhs, Input rhs) {
+                    // -1 - less than, 1 - greater than, 0 - equal, all inversed for descending
+                    return Data.getWorstCaseScore(lhs.getData()) > Data.getWorstCaseScore(rhs.getData()) ? -1 : Data.getWorstCaseScore(lhs.getData()) < Data.getWorstCaseScore(rhs.getData()) ? 1 : 0;
+                }
+            }); 
             for (Input input : list) {
                 if (!worstInputs.contains(input) && Data.getWorstCaseScore(input.getData()) > maxScore) {
+                    maxScore = Data.getWorstCaseScore(input.getData());
                     worstInputs.add(input);
                     newInputs.add(new Input(input.getData(), input.getEvaluated(),
                             Data.getWorstCaseScore(input.getData()), input.getCoastalEvaluated()));
@@ -492,7 +500,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
         }
         // 2 Walking bits.
@@ -503,7 +510,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
 
         }
@@ -515,7 +521,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
         }
 
@@ -531,7 +536,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
 
         }
@@ -546,7 +550,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
         }
 
@@ -562,7 +565,6 @@ public class JAFL {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
         }
 
@@ -580,7 +582,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
             }
         }
@@ -593,7 +594,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
             }
         }
@@ -606,7 +606,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
             }
         }
@@ -626,7 +625,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
             }
         }
@@ -640,7 +638,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
             }
@@ -655,7 +652,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(tempBase, tempBase.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
             }
         }
@@ -674,7 +670,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
                 base[j] = currentVal;
@@ -696,7 +691,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
                 base[j] = temp[1];
@@ -707,7 +701,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
                 base[j] = currentVal1;
@@ -734,7 +727,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
                 base[j] = temp[3];
@@ -747,7 +739,6 @@ public class JAFL {
                     int score = Data.getLocalBucketSize();
                     queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                     Data.resetTuples();
-                    paths++;
                 }
 
                 base[j] = currentVal1;
@@ -880,6 +871,10 @@ public class JAFL {
                     break;
                 case 11:
                 case 12:
+                    if (fixedInput) {
+                        j--;
+                        continue;
+                    }                   
                     // Delete bytes.
                     if (base.length < 2) {
                         continue;
@@ -887,13 +882,20 @@ public class JAFL {
                     byteNum = rand.nextInt(base.length);
                     base = Mutations.removeByte(base, byteNum);
                     break;
+                    
                 case 13:
+                    // Insert or clone random bytes
+                    if (fixedInput) {
+                        j--;
+                        continue;
+                    }                   
                     boolean clone = (rand.nextInt(4) > 0);
                     int blockSize = rand.nextInt(base.length); // how much you want to clone or insert
                     int blockStart = rand.nextInt(base.length - blockSize + 1); // where do you start from
                     int newPos = rand.nextInt(base.length); // where are we putting the new stuff
                     base = Mutations.CloningOrInserting(base, clone, blockStart, newPos, blockSize);
                     break;
+                    
                 case 14:
                     // Overwrite bytes
                     // Random chunk or fixed bytes.
@@ -915,15 +917,16 @@ public class JAFL {
                 default:
                     break;
                 }
+
             }
-            // System.out.println(base);
+
             execProgram(base);
             if (Data.getNew()) {
                 int score = Data.getLocalBucketSize();
                 queue.add(new Input(Arrays.copyOf(base, base.length), false, score, false));
                 Data.resetTuples();
-                paths++;
             }
+
             base = new byte[backup.length];
             System.arraycopy(backup, 0, base, 0, backup.length);
         }

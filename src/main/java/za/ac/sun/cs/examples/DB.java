@@ -23,13 +23,13 @@ public class DB {
                     }
                 }
             }
-        } else if (word.charAt(0) == 'f') {
-            if (word.charAt(1) == 'u') {
-                if (word.charAt(2) == 'n') {
-                    if (word.charAt(3) == 'd') {
-                        if (word.charAt(4) == 'a') {
-                            if (word.charAt(5) == 'z') {
-                                if (word.charAt(6) == 'e') {
+        } else if (word.charAt(0) == 'b') {
+            if (word.charAt(1) == 'e') {
+                if (word.charAt(2) == 'e') {
+                    if (word.charAt(3) == 'f') {
+                        if (word.charAt(4) == 'd') {
+                            if (word.charAt(5) == 'e') {
+                                if (word.charAt(6) == 'a') {
                                     if (word.charAt(7) == 'd') {
                                         System.exit(0);
                                         return 2;

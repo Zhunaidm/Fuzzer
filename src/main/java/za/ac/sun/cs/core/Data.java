@@ -25,6 +25,7 @@ public class Data {
     private static boolean worstCaseMode = false;
     private static int branchNo = 0;
     private static int counter = 0;
+    private static int noPaths = 0;
 
     public static void resetAll() {
         tuples = null;
@@ -84,6 +85,10 @@ public class Data {
         return tuples.size();
     }
 
+    public static int getPaths() {
+        return noPaths;
+    }
+
     public static int getNoBranches() {
         return branches.size();
     }
@@ -128,6 +133,7 @@ public class Data {
             }
             localBuckets.put(tuple, 1);
             newTuple = true;
+            noPaths++;
         } else if (!localBuckets.containsKey(tuple) && !src.equals(dest)) {
             localBuckets.put(tuple, 1);
         } else {
@@ -208,14 +214,9 @@ public class Data {
                 ArrayList<Integer> bucketValues = new ArrayList<Integer>(localBuckets.values());
                 ArrayList<Tuple> bucketTuples = new ArrayList<Tuple>(localBuckets.keySet());
                 int score = 0;
-                // for (Integer value : bucketValues) {
-                System.out.println("INPUT: " + new String(currentInput));
-                for (int i = 0; i < bucketValues.size(); i++) {
-                    System.out.println("Src: " + bucketTuples.get(i).getSrc() + " Dest: "
-                            + bucketTuples.get(i).getDest() + " Score: " + bucketValues.get(i));
+                for (int i = 0; i < bucketValues.size(); i++) {     
                     score += bucketValues.get(i);
                 }
-                // }
                 worstCaseScores.put(new ByteArrayWrapper(Arrays.copyOf(currentInput, currentInput.length)), score);
             }
         }

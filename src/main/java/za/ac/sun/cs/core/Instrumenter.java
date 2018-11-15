@@ -23,7 +23,6 @@ public class Instrumenter {
         new File(".branches").delete();
         for (String inputClassName : inputClassNames) {
             inputClassName = inputClassName.replaceAll("\\s+", "");
-            System.out.println(inputClassName);
             ClassReader cr = new ClassReader(inputClassName);
             final String className = (inputClassName + "_instrumented").replace('.', '/');
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
